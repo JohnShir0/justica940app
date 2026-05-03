@@ -468,9 +468,10 @@ def buscar_mensagens():
 @admin_required
 def admin_usuarios():
     conn = get_db()
-    usuarios = conn.execute("SELECT id, username, nome, role FROM usuarios ORDER BY nome").fetchall()
+    usuarios  = conn.execute("SELECT id, username, nome, role FROM usuarios ORDER BY nome").fetchall()
+    owner_id  = conn.execute("SELECT MIN(id) FROM usuarios").fetchone()[0]
     conn.close()
-    return render_template("admin_usuarios.html", usuarios=usuarios)
+    return render_template("admin_usuarios.html", usuarios=usuarios, owner_id=owner_id)
 
 
 @app.route("/admin/usuarios/novo", methods=["GET", "POST"])
@@ -503,14 +504,43 @@ def novo_usuario():
 @app.route("/admin/usuarios/deletar/<int:id>")
 @admin_required
 def deletar_usuario(id):
+    conn = get_db()
+    owner_id = conn.execute("SELECT MIN(id) FROM usuarios").fetchone()[0]
+    if id == owner_id:
+        flash("O proprietário do sistema não pode ser removido.", "erro")
+        conn.close()
+        return redirect(url_for("admin_usuarios"))
     if id == session["user_id"]:
         flash("Você não pode deletar sua própria conta.", "erro")
+        conn.close()
         return redirect(url_for("admin_usuarios"))
-    conn = get_db()
     conn.execute("DELETE FROM usuarios WHERE id = ?", (id,))
     conn.commit()
     conn.close()
     flash("Usuário removido.", "sucesso")
+    return redirect(url_for("admin_usuarios"))
+
+
+@app.route("/admin/usuarios/<int:id>/toggle-admin", methods=["POST"])
+@admin_required
+def toggle_admin(id):
+    conn = get_db()
+    owner_id = conn.execute("SELECT MIN(id) FROM usuarios").fetchone()[0]
+    if id == owner_id:
+        flash("O proprietário do sistema não pode ser alterado.", "erro")
+        conn.close()
+        return redirect(url_for("admin_usuarios"))
+    user = conn.execute("SELECT nome, role FROM usuarios WHERE id=?", (id,)).fetchone()
+    if not user:
+        flash("Usuário não encontrado.", "erro")
+        conn.close()
+        return redirect(url_for("admin_usuarios"))
+    new_role = "membro" if user["role"] == "admin" else "admin"
+    conn.execute("UPDATE usuarios SET role=? WHERE id=?", (new_role, id))
+    conn.commit()
+    conn.close()
+    acao = "promovido a Admin" if new_role == "admin" else "rebaixado a Membro"
+    flash(f"{user['nome']} foi {acao}.", "sucesso")
     return redirect(url_for("admin_usuarios"))
 
 
