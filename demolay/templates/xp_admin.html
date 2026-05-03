@@ -78,6 +78,81 @@
 
 </div>
 
+{# ── GRAUS / NÍVEIS ── #}
+<div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
+  <div class="secao-titulo" style="margin-bottom:1rem;">Graus / Níveis de XP</div>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">#</th>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">Nome</th>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">XP Mínimo</th>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">Cor</th>
+        <th style="border-bottom:1px solid var(--borda);"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for n in niveis_db %}
+    <form method="POST" action="{{ url_for('xp_admin_nivel_editar', nid=n.id) }}">
+    <tr>
+      <td style="padding:0.5rem 0.6rem;color:var(--texto-muted);font-size:0.8rem;">{{ loop.index }}</td>
+      <td style="padding:0.5rem 0.4rem;">
+        <input type="text" name="nome" value="{{ n.nome }}" required
+               style="width:100%;min-width:110px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.35rem 0.6rem;font-size:0.875rem;outline:none;font-family:inherit;" />
+      </td>
+      <td style="padding:0.5rem 0.4rem;">
+        <input type="number" name="limiar" value="{{ n.limiar }}" min="0"
+               {% if n.limiar == 0 %}readonly style="width:5.5rem;background:transparent;border:1px solid var(--borda);border-radius:6px;color:var(--texto-muted);padding:0.35rem 0.6rem;font-size:0.875rem;outline:none;text-align:center;"
+               {% else %}style="width:5.5rem;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.35rem 0.6rem;font-size:0.875rem;outline:none;text-align:center;"{% endif %} />
+      </td>
+      <td style="padding:0.5rem 0.4rem;">
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <input type="color" name="cor" value="{{ n.cor }}"
+                 style="width:2.5rem;height:2rem;border:1px solid var(--borda);border-radius:6px;background:var(--superficie2);cursor:pointer;padding:0.1rem;" />
+          <span style="font-size:0.75rem;color:{{ n.cor }};font-weight:600;">{{ n.nome }}</span>
+        </div>
+      </td>
+      <td style="padding:0.5rem 0.4rem;white-space:nowrap;display:flex;gap:0.4rem;align-items:center;">
+        <button type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;">Salvar</button>
+        {% if n.limiar != 0 %}
+        </form>
+        <form method="POST" action="{{ url_for('xp_admin_nivel_deletar', nid=n.id) }}"
+              onsubmit="return confirm('Remover o grau {{ n.nome }}?')">
+          <button type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;background:var(--vermelho);border-color:var(--vermelho);">✕</button>
+        </form>
+        {% else %}
+        </form>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  {# Adicionar novo grau #}
+  <form method="POST" action="{{ url_for('xp_admin_nivel_novo') }}"
+        style="display:flex;gap:0.6rem;align-items:flex-end;flex-wrap:wrap;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--borda);">
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Nome
+      <input type="text" name="nome" required placeholder="Ex: Lendário"
+             style="margin-top:0.3rem;display:block;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;font-family:inherit;width:130px;" />
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      XP Mínimo
+      <input type="number" name="limiar" required min="1" placeholder="2000"
+             style="margin-top:0.3rem;display:block;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;text-align:center;width:90px;" />
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Cor
+      <input type="color" name="cor" value="#e879f9"
+             style="margin-top:0.3rem;display:block;width:2.5rem;height:2rem;border:1px solid var(--borda);border-radius:6px;background:var(--superficie2);cursor:pointer;padding:0.1rem;" />
+    </label>
+    <button type="submit" class="btn" style="margin-bottom:0.05rem;">+ Adicionar Grau</button>
+  </form>
+</div>
+
 {# ── CONFIGURAR PESOS ── #}
 <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
   <div class="secao-titulo" style="margin-bottom:0.75rem;">Configurar Pontuação por Categoria</div>
