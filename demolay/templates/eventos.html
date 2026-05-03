@@ -1,12 +1,86 @@
 {% extends "base.html" %}
 {% block conteudo %}
 
+{# Mapeamento de tipo para label PT-BR e cor #}
+{% set tipo_label = {
+  'reuniao':    'Reunião',
+  'evento':     'Evento',
+  'cerimonia':  'Cerimônia',
+  'assembleia': 'Assembleia'
+} %}
+
+<!-- ── REUNIÕES COM PRESENÇA ────────────────────────────────── -->
 <div class="pagina-topo">
-  <h2>Eventos</h2>
-  <a href="{{ url_for('novo_evento') }}" class="btn">+ Novo Evento</a>
+  <h2>Reuniões &amp; Atividades</h2>
+  {% if session.get('role') == 'admin' %}
+  <a href="{{ url_for('presenca_nova_reuniao', next=url_for('eventos')) }}" class="btn">+ Nova Reunião</a>
+  {% endif %}
 </div>
 
+{% if reunioes %}
+<div class="lista-reunioes">
+  {% for r in reunioes %}
+  {% set partes = r.data.split('-') %}
+  {% set futura = r.data >= hoje %}
+  <div class="reuniao-card{% if not futura %} passada{% endif %}">
+    <div class="reuniao-data-col">
+      <span class="reuniao-dia">{{ partes[2] }}</span>
+      <span class="reuniao-mes">{{ ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][partes[1]|int] }}</span>
+      <span class="reuniao-hora">{{ r.hora }}</span>
+    </div>
+
+    <div class="reuniao-info">
+      <div class="reuniao-titulo">{{ r.titulo }}</div>
+      <div class="reuniao-meta">
+        <span class="tag-tipo tipo-{{ r.tipo }}">{{ tipo_label.get(r.tipo, r.tipo) }}</span>
+        {% if not futura %}<span class="tag-passado">Realizado</span>{% endif %}
+      </div>
+    </div>
+
+    <div class="reuniao-acoes">
+      {% if futura %}
+        {% if r.meu_status == 'confirmado' %}
+          <span class="badge-presenca confirmado">&#10003; Confirmado</span>
+        {% elif r.meu_status == 'ausente' %}
+          <span class="badge-presenca ausente">Ausente</span>
+        {% else %}
+          <form method="POST" action="{{ url_for('presenca_responder', rid=r.id) }}">
+            <input type="hidden" name="status" value="confirmado">
+            <input type="hidden" name="next" value="{{ url_for('eventos') }}">
+            <button type="submit" class="btn btn-sm">Confirmar</button>
+          </form>
+        {% endif %}
+      {% else %}
+        <span class="badge-presenca {{ r.meu_status }}">
+          {% if r.meu_status == 'confirmado' %}&#10003; Presente
+          {% elif r.meu_status == 'ausente_justificado' %}Justificado
+          {% elif r.meu_status == 'ausente' %}Ausente
+          {% else %}Não respondeu{% endif %}
+        </span>
+      {% endif %}
+      <a href="{{ url_for('presenca_detalhe', rid=r.id) }}" class="btn secundario btn-sm">Ver</a>
+      {% if session.get('role') == 'admin' %}
+      <a href="{{ url_for('presenca_deletar_reuniao', rid=r.id) }}"
+         class="btn-danger"
+         onclick="return confirm('Remover esta reunião e todos os registros de presença?')">&#x2715;</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="vazio">Nenhuma reunião agendada.</p>
+{% endif %}
+
+<!-- ── EVENTOS INFORMAIS ────────────────────────────────────── -->
 {% if eventos %}
+<div class="pagina-topo" style="margin-top:2.5rem;">
+  <h2>Comunicados de Eventos</h2>
+  {% if session.get('role') == 'admin' %}
+  <a href="{{ url_for('novo_evento') }}" class="btn secundario">+ Novo Comunicado</a>
+  {% endif %}
+</div>
+
 <div class="lista-eventos">
   {% for e in eventos %}
   <div class="evento-card">
@@ -15,14 +89,20 @@
       <h3>{{ e.titulo }}</h3>
       <p>{{ e.descricao or 'Sem descrição.' }}</p>
     </div>
+    {% if session.get('role') == 'admin' %}
     <a href="{{ url_for('deletar_evento', id=e.id) }}"
        class="btn-danger"
-       onclick="return confirm('Remover este evento?')">✕</a>
+       onclick="return confirm('Remover este evento?')">&#x2715;</a>
+    {% endif %}
   </div>
   {% endfor %}
 </div>
-{% else %}
-<p class="vazio">Nenhum evento cadastrado ainda.</p>
+{% elif session.get('role') == 'admin' %}
+<div class="pagina-topo" style="margin-top:2.5rem;">
+  <h2>Comunicados de Eventos</h2>
+  <a href="{{ url_for('novo_evento') }}" class="btn secundario">+ Novo Comunicado</a>
+</div>
+<p class="vazio">Nenhum comunicado cadastrado.</p>
 {% endif %}
 
 {% endblock %}
