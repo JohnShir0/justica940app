@@ -566,10 +566,30 @@ footer {
 }
 
 .bolha-autor {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   font-size: 0.7rem;
   color: var(--verde);
   font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.chat-nivel-badge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 20px;
+  border: 1px solid currentColor;
+  opacity: 0.9;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.bolha-nivel-meu {
+  display: flex;
+  justify-content: flex-end;
   margin-bottom: 0.2rem;
 }
 
