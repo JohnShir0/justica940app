@@ -826,42 +826,52 @@ def presenca_historico_usuario(user_id):
 @app.route("/presenca/ranking")
 @login_required
 def presenca_ranking():
-    periodo = request.args.get("periodo", "mensal")
-    hoje    = date.today()
+    periodo  = request.args.get("periodo", "mensal")
+    hoje     = date.today()
+    hoje_iso = hoje.isoformat()
 
     if periodo == "mensal":
         desde = hoje.replace(day=1).isoformat()
+        # fim = último dia do mês corrente
+        if hoje.month == 12:
+            fim = date(hoje.year + 1, 1, 1) - timedelta(days=1)
+        else:
+            fim = date(hoje.year, hoje.month + 1, 1) - timedelta(days=1)
+        ate = fim.isoformat()
     elif periodo == "trimestral":
         desde = (hoje - timedelta(days=90)).isoformat()
-    else:
-        desde = hoje.replace(month=1, day=1).isoformat()
+        ate   = hoje_iso
+    else:  # anual
+        desde = hoje.replace(month=1,  day=1).isoformat()
+        ate   = hoje.replace(month=12, day=31).isoformat()
 
-    hoje_iso = hoje.isoformat()
     conn = get_db()
 
-    # Subquery garante que só contamos presenças cujas reuniões estão dentro do período.
-    # O LEFT JOIN outer preserva usuários sem nenhuma reunião no período (total=0).
+    # `total`    = todas as reuniões do período (passadas + futuras confirmadas)
+    # `ausentes` = só reuniões já passadas (pendente no passado = falta)
+    # A subquery filtra corretamente pelo período; o LEFT JOIN preserva
+    # usuários sem nenhuma reunião no período (total = 0).
     rows = conn.execute("""
         SELECT u.id, u.nome,
-               COALESCE(s.total,       0) AS total,
-               COALESCE(s.confirmados, 0) AS confirmados,
-               COALESCE(s.justificadas,0) AS justificadas,
-               COALESCE(s.ausentes,    0) AS ausentes
+               COALESCE(s.total,        0) AS total,
+               COALESCE(s.confirmados,  0) AS confirmados,
+               COALESCE(s.justificadas, 0) AS justificadas,
+               COALESCE(s.ausentes,     0) AS ausentes
         FROM usuarios u
         LEFT JOIN (
             SELECT p.usuario_id,
-                   COUNT(*)                                                              AS total,
-                   SUM(CASE WHEN p.status = 'confirmado'          THEN 1 ELSE 0 END)   AS confirmados,
-                   SUM(CASE WHEN p.status = 'ausente_justificado' THEN 1 ELSE 0 END)   AS justificadas,
-                   SUM(CASE WHEN p.status = 'ausente'
-                             OR (p.status = 'pendente' AND r.data <= ?) THEN 1 ELSE 0 END) AS ausentes
+                   COUNT(*)                                                                   AS total,
+                   SUM(CASE WHEN p.status = 'confirmado'          THEN 1 ELSE 0 END)         AS confirmados,
+                   SUM(CASE WHEN p.status = 'ausente_justificado' THEN 1 ELSE 0 END)         AS justificadas,
+                   SUM(CASE WHEN (p.status = 'ausente'
+                              OR  p.status = 'pendente') AND r.data <= ? THEN 1 ELSE 0 END)  AS ausentes
             FROM presencas p
             JOIN reunioes r ON r.id = p.reuniao_id
             WHERE r.data >= ? AND r.data <= ?
             GROUP BY p.usuario_id
         ) s ON s.usuario_id = u.id
-        ORDER BY COALESCE(s.confirmados,0) DESC, COALESCE(s.ausentes,0) ASC
-    """, (hoje_iso, desde, hoje_iso)).fetchall()
+        ORDER BY COALESCE(s.confirmados, 0) DESC, COALESCE(s.ausentes, 0) ASC
+    """, (hoje_iso, desde, ate)).fetchall()
     conn.close()
 
     ranking = []
