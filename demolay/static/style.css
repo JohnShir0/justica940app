@@ -1144,3 +1144,413 @@ footer {
 
   .post-card { padding: 1rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   DASHBOARD — Card de Perfil
+══════════════════════════════════════════════════════════════ */
+
+.perfil-card {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.perfil-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(74,222,128,0.15);
+  border: 2px solid var(--verde);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--verde);
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.perfil-info {
+  flex: 1;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.perfil-nome {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--texto);
+}
+
+.perfil-cargo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.perfil-cargo {
+  font-size: 0.8rem;
+  color: var(--texto-muted);
+  background: var(--superficie2);
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid var(--borda);
+}
+
+.perfil-nivel {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.perfil-stats-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+
+.pstat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pstat-val {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--verde);
+  line-height: 1.1;
+}
+
+.pstat-de {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--texto-muted);
+}
+
+.pstat-lbl {
+  font-size: 0.7rem;
+  color: var(--texto-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.pstat-div {
+  width: 1px;
+  height: 32px;
+  background: var(--borda);
+}
+
+.xp-barra-wrap {
+  margin-top: 0.5rem;
+}
+
+.xp-barra-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--texto-muted);
+  margin-bottom: 4px;
+}
+
+.xp-barra-prox {
+  color: var(--texto-muted);
+}
+
+.xp-barra-bg {
+  width: 100%;
+  height: 8px;
+  background: var(--superficie2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.xp-barra-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.xp-barra-pct {
+  font-size: 0.75rem;
+  color: var(--texto-muted);
+  margin-top: 4px;
+}
+
+.xp-falta {
+  color: var(--texto-muted);
+}
+
+.perfil-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: center;
+  align-self: center;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DASHBOARD — Painel de Próximas Atividades
+══════════════════════════════════════════════════════════════ */
+
+.dashboard-section {
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.section-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--texto-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.proximas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.proxima-card {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: border-color 0.15s;
+}
+
+.proxima-card:hover {
+  border-color: rgba(74,222,128,0.3);
+}
+
+.proxima-card.confirmado {
+  border-color: rgba(74,222,128,0.4);
+  background: rgba(74,222,128,0.04);
+}
+
+.proxima-tipo {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.proxima-titulo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.proxima-data {
+  font-size: 0.8rem;
+  color: var(--texto-muted);
+  margin-top: 2px;
+}
+
+.proxima-acao {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ── Cores por tipo de reunião ── */
+.tipo-reuniao    { background: rgba(74,222,128,0.12); color: #4ade80; }
+.tipo-evento     { background: rgba(96,165,250,0.12); color: #60a5fa; }
+.tipo-cerimonia  { background: rgba(251,191,36,0.12); color: #fbbf24; }
+.tipo-assembleia { background: rgba(167,139,250,0.12); color: #a78bfa; }
+
+/* ── Badges de status de presença ── */
+.badge-presenca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+}
+
+.badge-presenca.confirmado {
+  background: rgba(74,222,128,0.15);
+  color: #4ade80;
+}
+
+.badge-presenca.ausente {
+  background: rgba(248,113,113,0.15);
+  color: #f87171;
+}
+
+.badge-presenca.ausente_justificado {
+  background: rgba(251,191,36,0.15);
+  color: #fbbf24;
+}
+
+.badge-presenca.pendente {
+  background: rgba(156,163,175,0.15);
+  color: #9ca3af;
+}
+
+/* ── Botão pequeno ── */
+.btn-sm {
+  padding: 0.3rem 0.75rem !important;
+  font-size: 0.8rem !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   EVENTOS — Lista de Reuniões integrada
+══════════════════════════════════════════════════════════════ */
+
+.lista-reunioes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.reuniao-card {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  transition: border-color 0.15s;
+}
+
+.reuniao-card:hover {
+  border-color: rgba(74,222,128,0.25);
+}
+
+.reuniao-card.passada {
+  opacity: 0.6;
+}
+
+.reuniao-data-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+  flex-shrink: 0;
+}
+
+.reuniao-dia {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--verde);
+  line-height: 1;
+}
+
+.reuniao-mes {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--texto-muted);
+  letter-spacing: 0.06em;
+}
+
+.reuniao-hora {
+  font-size: 0.7rem;
+  color: var(--texto-muted);
+  margin-top: 2px;
+}
+
+.reuniao-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.reuniao-titulo {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--texto);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reuniao-meta {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.tag-tipo {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.tag-passado {
+  font-size: 0.7rem;
+  color: var(--texto-muted);
+  background: var(--superficie2);
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+}
+
+.reuniao-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .perfil-card {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  .perfil-avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 1.3rem;
+  }
+
+  .perfil-links {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .proximas-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reuniao-card {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .reuniao-acoes {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
