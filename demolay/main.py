@@ -114,6 +114,13 @@ def init_db():
             conquistado_em TEXT DEFAULT (datetime('now', 'localtime')),
             UNIQUE(usuario_id, badge_id)
         );
+
+        CREATE TABLE IF NOT EXISTS xp_niveis (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            limiar INTEGER NOT NULL UNIQUE,
+            nome TEXT NOT NULL,
+            cor TEXT NOT NULL DEFAULT '#9ca3af'
+        );
     """)
 
     if conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0] == 0:
@@ -203,6 +210,15 @@ def init_db():
         )
         conn.commit()
 
+    if conn.execute("SELECT COUNT(*) FROM xp_niveis").fetchone()[0] == 0:
+        conn.executemany(
+            "INSERT INTO xp_niveis (limiar, nome, cor) VALUES (?,?,?)",
+            [(0, "Aprendiz", "#9ca3af"), (100, "Escudeiro", "#60a5fa"),
+             (300, "Cavaleiro", "#a78bfa"), (600, "Guardião", "#4ade80"),
+             (1000, "Mestre", "#fbbf24"), (1500, "Grão-Mestre", "#f97316")]
+        )
+        conn.commit()
+
     conn.commit()
     conn.close()
 
@@ -269,7 +285,8 @@ def index():
     meu_xp = conn.execute(
         "SELECT COALESCE(SUM(pontos),0) FROM xp_registros WHERE usuario_id=?", (uid,)
     ).fetchone()[0]
-    nivel = _nivel_info(meu_xp)
+    niveis = _get_niveis(conn)
+    nivel = _nivel_info(meu_xp, niveis)
 
     ranking_xp = conn.execute("""
         SELECT usuario_id, COALESCE(SUM(pontos),0) AS total
@@ -439,7 +456,7 @@ def enviar_mensagem():
         conn = get_db()
         uid = session["user_id"]
         xp = conn.execute("SELECT COALESCE(SUM(pontos),0) FROM xp_registros WHERE usuario_id=?", (uid,)).fetchone()[0]
-        nivel = _nivel_info(xp)
+        nivel = _nivel_info(xp, _get_niveis(conn))
         conn.execute(
             "INSERT INTO mensagens (autor, texto, nivel_nome, nivel_cor) VALUES (?, ?, ?, ?)",
             (session["nome"], texto, nivel["nome"], nivel["cor"])
@@ -548,31 +565,27 @@ def toggle_admin(id):
 
 OWNER_NOME = "João Souza"
 
-NIVEIS = [
-    (0,    1, "Aprendiz",    "#9ca3af"),
-    (100,  2, "Escudeiro",   "#60a5fa"),
-    (300,  3, "Cavaleiro",   "#a78bfa"),
-    (600,  4, "Guardião",    "#4ade80"),
-    (1000, 5, "Mestre",      "#fbbf24"),
-    (1500, 6, "Grão-Mestre", "#f97316"),
-]
+
+def _get_niveis(conn):
+    rows = conn.execute("SELECT limiar, nome, cor FROM xp_niveis ORDER BY limiar ASC").fetchall()
+    return [(r["limiar"], r["nome"], r["cor"]) for r in rows]
 
 
-def _nivel_info(pontos):
-    atual = NIVEIS[0]
-    for n in NIVEIS:
+def _nivel_info(pontos, niveis):
+    atual = niveis[0]
+    for n in niveis:
         if pontos >= n[0]:
             atual = n
-    idx = NIVEIS.index(atual)
-    prox = NIVEIS[idx + 1] if idx + 1 < len(NIVEIS) else None
+    idx = niveis.index(atual)
+    prox = niveis[idx + 1] if idx + 1 < len(niveis) else None
     if prox:
         faixa = prox[0] - atual[0]
         progresso = min(100, round((pontos - atual[0]) / faixa * 100))
         falta = prox[0] - pontos
     else:
         progresso, falta = 100, 0
-    return {"numero": atual[1], "nome": atual[2], "cor": atual[3],
-            "proximo": prox[2] if prox else None,
+    return {"numero": idx + 1, "nome": atual[1], "cor": atual[2],
+            "proximo": prox[1] if prox else None,
             "proximo_limiar": prox[0] if prox else None,
             "progresso": progresso, "falta": falta}
 
@@ -941,7 +954,8 @@ def xp_dashboard():
     meu_xp = conn.execute(
         "SELECT COALESCE(SUM(pontos),0) FROM xp_registros WHERE usuario_id=?", (uid,)
     ).fetchone()[0]
-    nivel = _nivel_info(meu_xp)
+    niveis = _get_niveis(conn)
+    nivel = _nivel_info(meu_xp, niveis)
 
     meu_xp_mes = conn.execute(
         "SELECT COALESCE(SUM(pontos),0) FROM xp_registros"
@@ -983,7 +997,7 @@ def xp_dashboard():
         ranking_info.append({
             "pos": i + 1, "id": r["id"], "nome": r["nome"],
             "xp_mes": r["xp_mes"], "xp_total": r["xp_total"],
-            "nivel": _nivel_info(r["xp_total"]),
+            "nivel": _nivel_info(r["xp_total"], niveis),
             "e_eu": r["id"] == uid,
         })
 
@@ -1015,7 +1029,8 @@ def xp_perfil_usuario(user_id):
     xp_total = conn.execute(
         "SELECT COALESCE(SUM(pontos),0) FROM xp_registros WHERE usuario_id=?", (user_id,)
     ).fetchone()[0]
-    nivel = _nivel_info(xp_total)
+    niveis = _get_niveis(conn)
+    nivel = _nivel_info(xp_total, niveis)
 
     por_categoria = conn.execute("""
         SELECT xc.nome, xc.icone, xc.codigo,
@@ -1089,9 +1104,10 @@ def xp_ranking():
             GROUP BY u.id ORDER BY xp DESC
         """).fetchall()
 
+    niveis = _get_niveis(conn)
     conn.close()
     ranking = [{"pos": i + 1, "id": r["id"], "nome": r["nome"],
-                "xp": r["xp"], "nivel": _nivel_info(r["xp_total"]),
+                "xp": r["xp"], "nivel": _nivel_info(r["xp_total"], niveis),
                 "n_badges": r["n_badges"], "e_eu": r["id"] == uid}
                for i, r in enumerate(rows)]
 
@@ -1104,6 +1120,7 @@ def xp_admin():
     conn = get_db()
     categorias = conn.execute("SELECT * FROM xp_categorias ORDER BY pontos DESC").fetchall()
     usuarios   = conn.execute("SELECT id, nome FROM usuarios ORDER BY nome").fetchall()
+    niveis_db  = conn.execute("SELECT * FROM xp_niveis ORDER BY limiar ASC").fetchall()
     recentes   = conn.execute("""
         SELECT xr.pontos, xr.descricao, xr.criado_em,
                u.nome AS membro, xc.nome AS cat, xc.icone
@@ -1114,7 +1131,77 @@ def xp_admin():
     """).fetchall()
     conn.close()
     return render_template("xp_admin.html",
-                           categorias=categorias, usuarios=usuarios, recentes=recentes)
+                           categorias=categorias, usuarios=usuarios,
+                           niveis_db=niveis_db, recentes=recentes)
+
+
+@app.route("/gamificacao/admin/nivel/novo", methods=["POST"])
+@admin_required
+def xp_admin_nivel_novo():
+    nome   = request.form.get("nome", "").strip()
+    limiar = request.form.get("limiar", type=int)
+    cor    = request.form.get("cor", "#9ca3af").strip()
+    if not nome or limiar is None or limiar < 0:
+        flash("Preencha nome e XP mínimo corretamente.", "erro")
+        return redirect(url_for("xp_admin"))
+    conn = get_db()
+    try:
+        conn.execute("INSERT INTO xp_niveis (limiar, nome, cor) VALUES (?,?,?)", (limiar, nome, cor))
+        conn.commit()
+        flash(f"Grau '{nome}' adicionado.", "sucesso")
+    except Exception:
+        flash("Já existe um grau com esse XP mínimo.", "erro")
+    conn.close()
+    return redirect(url_for("xp_admin"))
+
+
+@app.route("/gamificacao/admin/nivel/<int:nid>/editar", methods=["POST"])
+@admin_required
+def xp_admin_nivel_editar(nid):
+    nome   = request.form.get("nome", "").strip()
+    limiar = request.form.get("limiar", type=int)
+    cor    = request.form.get("cor", "").strip()
+    if not nome or limiar is None or limiar < 0 or not cor:
+        flash("Dados inválidos.", "erro")
+        return redirect(url_for("xp_admin"))
+    conn = get_db()
+    atual = conn.execute("SELECT limiar FROM xp_niveis WHERE id=?", (nid,)).fetchone()
+    if not atual:
+        flash("Grau não encontrado.", "erro")
+        conn.close()
+        return redirect(url_for("xp_admin"))
+    if atual["limiar"] == 0 and limiar != 0:
+        flash("O grau base (0 XP) não pode ter seu limiar alterado.", "erro")
+        conn.close()
+        return redirect(url_for("xp_admin"))
+    try:
+        conn.execute("UPDATE xp_niveis SET nome=?, limiar=?, cor=? WHERE id=?", (nome, limiar, cor, nid))
+        conn.commit()
+        flash(f"Grau '{nome}' atualizado.", "sucesso")
+    except Exception:
+        flash("Já existe um grau com esse XP mínimo.", "erro")
+    conn.close()
+    return redirect(url_for("xp_admin"))
+
+
+@app.route("/gamificacao/admin/nivel/<int:nid>/deletar", methods=["POST"])
+@admin_required
+def xp_admin_nivel_deletar(nid):
+    conn = get_db()
+    nivel = conn.execute("SELECT limiar, nome FROM xp_niveis WHERE id=?", (nid,)).fetchone()
+    if not nivel:
+        flash("Grau não encontrado.", "erro")
+        conn.close()
+        return redirect(url_for("xp_admin"))
+    if nivel["limiar"] == 0:
+        flash("O grau base (0 XP) não pode ser removido.", "erro")
+        conn.close()
+        return redirect(url_for("xp_admin"))
+    conn.execute("DELETE FROM xp_niveis WHERE id=?", (nid,))
+    conn.commit()
+    conn.close()
+    flash(f"Grau '{nivel['nome']}' removido.", "sucesso")
+    return redirect(url_for("xp_admin"))
 
 
 @app.route("/gamificacao/admin/pontos", methods=["POST"])
