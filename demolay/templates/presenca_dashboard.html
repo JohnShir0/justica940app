@@ -2,7 +2,7 @@
 {% block conteudo %}
 
 <div class="pagina-topo" style="margin-bottom:1.5rem;">
-  <h2>Presença</h2>
+  <h2>Agenda &amp; Presença</h2>
   {% if session.get('role') == 'admin' %}
     <a href="{{ url_for('presenca_nova_reuniao') }}" class="btn">+ Nova Reunião</a>
   {% endif %}
