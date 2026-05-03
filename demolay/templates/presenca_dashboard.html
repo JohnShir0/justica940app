@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo" style="margin-bottom:1.5rem;">
+  <h2>Presença</h2>
+  {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('presenca_nova_reuniao') }}" class="btn">+ Nova Reunião</a>
+  {% endif %}
+</div>
+
+{# ── STATS PESSOAIS ── #}
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Confirmações</div>
+    <div class="stat-value c-verde">{{ stats.confirmados or 0 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pendentes</div>
+    <div class="stat-value c-muted">{{ stats.pendentes or 0 }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Ausências</div>
+    <div class="stat-value c-vermelho">{{ (stats.ausencias or 0) + (stats.justificadas or 0) }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Minha Taxa</div>
+    <div class="stat-value {% if taxa >= 75 %}c-verde{% elif taxa >= 50 %}c-amarelo{% else %}c-vermelho{% endif %}">{{ taxa }}%</div>
+    <div class="barra-wrap">
+      <div class="barra"><div class="barra-fill" style="width:{{ taxa }}%"></div></div>
+    </div>
+  </div>
+</div>
+
+{# ── ADMIN: PRÓXIMA REUNIÃO ── #}
+{% if session.get('role') == 'admin' and proxima and admin_stats %}
+<div style="background:var(--superficie); border:1px solid var(--borda); border-radius:10px; padding:1.25rem 1.5rem; margin-bottom:2rem;">
+  <div class="stat-label" style="margin-bottom:0.75rem;">Próxima reunião — {{ proxima.titulo }}</div>
+  <div style="display:flex; gap:2rem; flex-wrap:wrap;">
+    <div><span class="stat-value c-verde" style="font-size:1.5rem;">{{ admin_stats.confirmados }}</span><div class="stat-label" style="margin-top:0.2rem;">Confirmados</div></div>
+    <div><span class="stat-value c-muted" style="font-size:1.5rem;">{{ admin_stats.pendentes }}</span><div class="stat-label" style="margin-top:0.2rem;">Pendentes</div></div>
+    <div><span class="stat-value c-vermelho" style="font-size:1.5rem;">{{ admin_stats.ausentes }}</span><div class="stat-label" style="margin-top:0.2rem;">Ausências</div></div>
+    <div style="margin-left:auto; align-self:center;">
+      <a href="{{ url_for('presenca_detalhe', rid=proxima.id) }}" class="btn secundario">Ver detalhes</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="grid-2">
+
+{# ── PRÓXIMAS REUNIÕES ── #}
+<div>
+  <div class="secao-titulo">Próximas reuniões</div>
+  {% if proximas %}
+  <div style="background:var(--superficie); border:1px solid var(--borda); border-radius:10px; overflow:hidden;">
+    {% for r in proximas %}
+    <a href="{{ url_for('presenca_detalhe', rid=r.id) }}"
+       style="display:flex; align-items:center; gap:0.85rem; padding:0.85rem 1.1rem; border-bottom:1px solid var(--borda); text-decoration:none; transition:background 0.15s;"
+       onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+      <div style="min-width:60px; text-align:center;">
+        <div style="font-size:0.65rem; text-transform:uppercase; color:var(--texto-muted); letter-spacing:0.08em;">{{ r.data[5:7] }}/{{ r.data[:4] }}</div>
+        <div style="font-size:1.1rem; font-weight:700; color:var(--texto);">{{ r.data[8:] }}</div>
+      </div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:0.875rem; font-weight:500; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.titulo }}</div>
+        <div style="font-size:0.75rem; color:var(--texto-muted);">{{ r.hora }} &nbsp;·&nbsp; <span class="tipo-badge">{{ r.tipo }}</span></div>
+      </div>
+      <span class="sbadge sbadge-{{ r.meu_status }}">
+        {% if r.meu_status == 'confirmado' %}✓ Confirmado
+        {% elif r.meu_status == 'ausente_justificado' %}Justificado
+        {% elif r.meu_status == 'ausente' %}Ausente
+        {% else %}Pendente{% endif %}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="vazio" style="padding:2rem;">Nenhuma reunião agendada.</p>
+  {% endif %}
+</div>
+
+{# ── REUNIÕES RECENTES ── #}
+<div>
+  <div class="secao-titulo">Histórico recente</div>
+  {% if recentes %}
+  <div style="background:var(--superficie); border:1px solid var(--borda); border-radius:10px; overflow:hidden;">
+    {% for r in recentes %}
+    <a href="{{ url_for('presenca_detalhe', rid=r.id) }}"
+       style="display:flex; align-items:center; gap:0.85rem; padding:0.85rem 1.1rem; border-bottom:1px solid var(--borda); text-decoration:none; transition:background 0.15s;"
+       onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+      <div style="min-width:60px; text-align:center;">
+        <div style="font-size:0.65rem; text-transform:uppercase; color:var(--texto-muted); letter-spacing:0.08em;">{{ r.data[5:7] }}/{{ r.data[:4] }}</div>
+        <div style="font-size:1.1rem; font-weight:700; color:var(--texto-muted);">{{ r.data[8:] }}</div>
+      </div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:0.875rem; font-weight:500; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.titulo }}</div>
+        <div style="font-size:0.75rem; color:var(--texto-muted);">{{ r.hora }}</div>
+      </div>
+      <span class="sbadge sbadge-{{ r.meu_status }}">
+        {% if r.meu_status == 'confirmado' %}✓ Presente
+        {% elif r.meu_status == 'ausente_justificado' %}Justificado
+        {% else %}Ausente{% endif %}
+      </span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="vazio" style="padding:2rem;">Nenhum histórico ainda.</p>
+  {% endif %}
+</div>
+
+</div>{# .grid-2 #}
+
+{# ── LINKS RÁPIDOS ── #}
+<div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.5rem;">
+  <a href="{{ url_for('presenca_reunioes') }}" class="btn secundario">Ver todas as reuniões</a>
+  <a href="{{ url_for('presenca_historico') }}" class="btn secundario">Meu histórico completo</a>
+  <a href="{{ url_for('presenca_ranking') }}" class="btn secundario">Ranking de assiduidade</a>
+</div>
+
+{% endblock %}

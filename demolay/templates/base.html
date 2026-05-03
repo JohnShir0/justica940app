@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Capítulo DeMolay</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-symbol">⚖</span>
+        <div>
+          <h1>Ordem DeMolay</h1>
+          <p>Capítulo Justiça de Cambé &mdash; N940</p>
+        </div>
+      </div>
+      <nav>
+        <a href="{{ url_for('index') }}"   class="{{ 'ativo' if request.endpoint == 'index' }}">Início</a>
+        <a href="{{ url_for('membros') }}" class="{{ 'ativo' if 'membro' in request.endpoint }}">Membros</a>
+        <a href="{{ url_for('eventos') }}" class="{{ 'ativo' if 'evento' in request.endpoint }}">Eventos</a>
+        <a href="{{ url_for('mural') }}"   class="{{ 'ativo' if 'mural' in request.endpoint or 'post' in request.endpoint }}">Mural</a>
+        <a href="{{ url_for('chat') }}"     class="{{ 'ativo' if 'chat' in request.endpoint }}">Chat</a>
+        <a href="{{ url_for('presenca_dashboard') }}" class="{{ 'ativo' if 'presenca' in request.endpoint }}">Presença</a>
+        <a href="{{ url_for('xp_dashboard') }}" class="{{ 'ativo' if request.endpoint.startswith('xp_') }}">XP</a>
+        {% if session.get('role') == 'admin' %}
+          <a href="{{ url_for('admin_usuarios') }}" class="{{ 'ativo' if 'admin' in request.endpoint }}">Usuários</a>
+        {% endif %}
+      </nav>
+      <div class="usuario">
+        {% if session.get('user_id') %}
+          <span class="usuario-nome">{{ session.nome }}</span>
+          {% if session.get('role') == 'admin' %}
+            <span class="badge" style="font-size:0.7rem;">Admin</span>
+          {% endif %}
+          <a href="{{ url_for('sair') }}" class="btn-sair">Sair</a>
+        {% else %}
+          <a href="{{ url_for('entrar') }}" class="btn btn-entrar">Entrar</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main>
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in msgs %}
+        <div class="alerta {{ cat }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    {% block conteudo %}{% endblock %}
+  </main>
+
+  <footer>
+    <p>Ordem DeMolay &mdash; Capítulo Justiça de Cambé N940 &copy; 2026</p>
+  </footer>
+
+</body>
+</html>

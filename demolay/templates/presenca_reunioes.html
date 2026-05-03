@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo">
+  <h2>Reuniões & Eventos</h2>
+  {% if session.get('role') == 'admin' %}
+    <a href="{{ url_for('presenca_nova_reuniao') }}" class="btn">+ Nova Reunião</a>
+  {% endif %}
+</div>
+
+{% if reunioes %}
+<table>
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Título</th>
+      <th>Tipo</th>
+      <th>Minha Situação</th>
+      {% if session.get('role') == 'admin' %}<th>Confirmados</th>{% endif %}
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in reunioes %}
+    <tr>
+      <td style="white-space:nowrap; color:var(--texto-muted); font-size:0.85rem;">
+        {{ r.data[8:] }}/{{ r.data[5:7] }}/{{ r.data[:4] }}
+        {% if r.data >= hoje %}
+          <span style="font-size:0.68rem; color:var(--verde); margin-left:0.35rem;">●</span>
+        {% endif %}
+      </td>
+      <td style="font-weight:500;">{{ r.titulo }}</td>
+      <td><span class="tipo-badge">{{ r.tipo }}</span></td>
+      <td>
+        <span class="sbadge sbadge-{{ r.meu_status if r.data >= hoje or r.meu_status != 'pendente' else 'ausente' }}">
+          {% set s = r.meu_status if r.data >= hoje or r.meu_status != 'pendente' else 'ausente' %}
+          {% if s == 'confirmado' %}✓ Confirmado
+          {% elif s == 'ausente_justificado' %}Justificado
+          {% elif s == 'ausente' %}Ausente
+          {% else %}Pendente{% endif %}
+        </span>
+      </td>
+      {% if session.get('role') == 'admin' %}
+      <td style="font-size:0.85rem;">
+        <span style="color:var(--verde);">{{ r.confirmados }}</span>
+        <span style="color:var(--texto-muted);">/{{ r.total_membros }}</span>
+      </td>
+      {% endif %}
+      <td>
+        <a href="{{ url_for('presenca_detalhe', rid=r.id) }}" class="btn secundario" style="padding:0.3rem 0.75rem; font-size:0.8rem;">Abrir</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="vazio">Nenhuma reunião cadastrada ainda.</p>
+{% endif %}
+
+{% endblock %}

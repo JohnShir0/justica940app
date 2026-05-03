@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo">
+  <h2>Usuários do Sistema</h2>
+  <a href="{{ url_for('novo_usuario') }}" class="btn">+ Novo Usuário</a>
+</div>
+
+{% if usuarios %}
+<table>
+  <thead>
+    <tr>
+      <th>Nome</th>
+      <th>Usuário</th>
+      <th>Nível</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in usuarios %}
+    <tr>
+      <td>{{ u.nome }}</td>
+      <td>{{ u.username }}</td>
+      <td><span class="badge">{{ u.role }}</span></td>
+      <td>
+        {% if u.id != session.user_id %}
+          <a href="{{ url_for('deletar_usuario', id=u.id) }}" class="btn-danger"
+             onclick="return confirm('Remover o usuário {{ u.username }}?')">Remover</a>
+        {% else %}
+          <span style="color:var(--texto-muted); font-size:0.8rem;">você</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="vazio">Nenhum usuário cadastrado.</p>
+{% endif %}
+
+{% endblock %}

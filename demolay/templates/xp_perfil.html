@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+{# ── SELETOR ADMIN ── #}
+{% if todos %}
+<div style="margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem;">
+  <label style="font-size:0.75rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">Perfil de</label>
+  <select onchange="window.location='/gamificacao/perfil/'+this.value"
+          style="background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.35rem 0.75rem;font-size:0.875rem;outline:none;cursor:pointer;">
+    {% for u in todos %}
+    <option value="{{ u.id }}" {% if u.id == user_id %}selected{% endif %}>{{ u.nome }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% endif %}
+
+{# ── CABEÇALHO DE PERFIL ── #}
+<div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:2rem;margin-bottom:1.5rem;">
+  <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+    <div style="width:72px;height:72px;border-radius:50%;border:3px solid {{ nivel.cor }};display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:900;color:{{ nivel.cor }};flex-shrink:0;background:{{ nivel.cor }}10;">
+      {{ nivel.numero }}
+    </div>
+    <div style="flex:1;">
+      <h2 style="font-size:1.35rem;font-weight:700;color:var(--texto);margin-bottom:0.3rem;">{{ usuario.nome }}</h2>
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <span class="nivel-chip" style="color:{{ nivel.cor }};border-color:{{ nivel.cor }}33;background:{{ nivel.cor }}12;font-size:0.78rem;padding:0.25rem 0.8rem;">
+          Nível {{ nivel.numero }} — {{ nivel.nome }}
+        </span>
+        <span style="font-size:0.85rem;color:var(--texto-muted);">{{ xp_total }} XP acumulados</span>
+      </div>
+      <div class="xp-bar-wrap" style="max-width:360px;margin-top:0.75rem;">
+        <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--texto-muted);">
+          <span>{{ xp_total }} XP</span>
+          {% if nivel.proximo %}<span>{{ nivel.proximo_limiar }} XP → {{ nivel.proximo }}</span>
+          {% else %}<span style="color:{{ nivel.cor }};">Nível máximo ✓</span>{% endif %}
+        </div>
+        <div class="xp-bar" style="height:8px;">
+          <div class="xp-bar-fill" style="width:{{ nivel.progresso }}%;background:{{ nivel.cor }};"></div>
+        </div>
+      </div>
+    </div>
+    {% if not e_meu %}
+    <a href="{{ url_for('xp_dashboard') }}" class="btn secundario">← Voltar</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.5rem;">
+
+  {# ── XP POR CATEGORIA ── #}
+  <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.25rem 1.5rem;">
+    <div class="secao-titulo" style="margin-bottom:0.75rem;">XP por Atividade</div>
+    {% set max_pts = por_categoria[0].total if por_categoria and por_categoria[0].total > 0 else 1 %}
+    {% for c in por_categoria %}
+    <div class="cat-row">
+      <div class="cat-icon">{{ c.icone }}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.2rem;">
+          <span class="cat-nome">{{ c.nome }}</span>
+          <span class="cat-pts">{{ c.total }}</span>
+        </div>
+        <div class="barra" style="height:3px;">
+          <div class="barra-fill" style="width:{{ [(c.total / max_pts * 100)|int, 100]|min }}%;"></div>
+        </div>
+        <div style="font-size:0.68rem;color:var(--texto-muted);margin-top:0.2rem;">{{ c.vezes }}× registrado</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── HISTÓRICO ── #}
+  <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.25rem 1.5rem;">
+    <div class="secao-titulo" style="margin-bottom:0.75rem;">Últimas Atividades</div>
+    {% if historico %}
+      {% for h in historico %}
+      <div class="atividade-item">
+        <div class="atividade-icone">{{ h.icone }}</div>
+        <div class="atividade-info">
+          <div class="atividade-desc">{{ h.descricao }}</div>
+          <div class="atividade-cat">{{ h.cat }} &nbsp;·&nbsp; {{ h.criado_em[:10] }}</div>
+        </div>
+        <span class="xp-pts-badge">+{{ h.pontos }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--texto-muted);font-size:0.85rem;">Nenhuma atividade registrada.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+{# ── EVOLUÇÃO MENSAL ── #}
+{% if por_mes %}
+<div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;">
+  <div class="secao-titulo" style="margin-bottom:1rem;">Evolução Mensal</div>
+  {% set max_m = por_mes | map(attribute='total') | max %}
+  <div style="display:flex;align-items:flex-end;gap:0.5rem;height:80px;">
+    {% for m in por_mes %}
+    {% set h_pct = ((m.total / max_m * 100)|int) if max_m > 0 else 0 %}
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:0.35rem;">
+      <div style="font-size:0.65rem;color:var(--verde);font-weight:700;">{{ m.total }}</div>
+      <div style="width:100%;background:rgba(74,222,128,0.15);border-radius:4px 4px 0 0;border:1px solid rgba(74,222,128,0.2);"
+           style="height:{{ h_pct }}%;">
+        <div style="height:{{ h_pct }}%;min-height:4px;background:var(--verde);border-radius:4px 4px 0 0;"></div>
+      </div>
+      <div style="font-size:0.62rem;color:var(--texto-muted);">{{ m.mes[5:] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# ── CONQUISTAS ── #}
+<div class="secao-titulo" style="margin-bottom:0.75rem;">
+  Conquistas ({{ todos_badges | selectattr('ganhou','eq',1) | list | length }}/{{ todos_badges | length }})
+</div>
+<div class="badge-grid">
+  {% for b in todos_badges %}
+  <div class="badge-card {% if b.ganhou %}ganhou{% else %}bloqueado{% endif %}">
+    <div class="badge-icone">{{ b.icone }}</div>
+    <div class="badge-nome">{{ b.nome }}</div>
+    <div class="badge-desc">{{ b.descricao }}</div>
+    {% if b.ganhou and b.conquistado_em %}
+    <div style="font-size:0.62rem;color:var(--verde);margin-top:0.2rem;">{{ b.conquistado_em[:10] }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

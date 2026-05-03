@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo">
+  <h2>Eventos</h2>
+  <a href="{{ url_for('novo_evento') }}" class="btn">+ Novo Evento</a>
+</div>
+
+{% if eventos %}
+<div class="lista-eventos">
+  {% for e in eventos %}
+  <div class="evento-card">
+    <div class="evento-data">{{ e.data }}</div>
+    <div class="evento-info">
+      <h3>{{ e.titulo }}</h3>
+      <p>{{ e.descricao or 'Sem descrição.' }}</p>
+    </div>
+    <a href="{{ url_for('deletar_evento', id=e.id) }}"
+       class="btn-danger"
+       onclick="return confirm('Remover este evento?')">✕</a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="vazio">Nenhum evento cadastrado ainda.</p>
+{% endif %}
+
+{% endblock %}

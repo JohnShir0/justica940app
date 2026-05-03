@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+{# ── CABEÇALHO DA REUNIÃO ── #}
+<div style="margin-bottom:1.75rem;">
+  <a href="{{ url_for('presenca_reunioes') }}" style="font-size:0.8rem; color:var(--texto-muted); text-decoration:none;">← Reuniões</a>
+  <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-top:0.75rem; gap:1rem; flex-wrap:wrap;">
+    <div>
+      <h2 style="font-size:1.4rem; font-weight:700; color:var(--texto); margin-bottom:0.3rem;">{{ reuniao.titulo }}</h2>
+      <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+        <span style="font-size:0.85rem; color:var(--texto-muted);">
+          📅 {{ reuniao.data[8:] }}/{{ reuniao.data[5:7] }}/{{ reuniao.data[:4] }} às {{ reuniao.hora }}
+        </span>
+        <span class="tipo-badge">{{ reuniao.tipo }}</span>
+        {% if reuniao.data >= hoje %}
+          <span style="font-size:0.75rem; color:var(--verde); font-weight:600;">● Em aberto</span>
+        {% else %}
+          <span style="font-size:0.75rem; color:var(--texto-muted);">Encerrado</span>
+        {% endif %}
+      </div>
+      {% if reuniao.descricao %}
+      <p style="margin-top:0.6rem; color:var(--texto-muted); font-size:0.875rem; line-height:1.6;">{{ reuniao.descricao }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# ── MINHA RESPOSTA ── #}
+{% if reuniao.data >= hoje %}
+<div style="background:var(--superficie); border:1px solid var(--borda); border-radius:10px; padding:1.25rem 1.5rem; margin-bottom:1.75rem;">
+  <div class="secao-titulo" style="margin-bottom:0.9rem;">Minha confirmação</div>
+
+  {% if minha and minha.status != 'pendente' %}
+  <div style="display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+    <span class="sbadge sbadge-{{ minha.status }}" style="font-size:0.85rem; padding:0.3rem 0.9rem;">
+      {% if minha.status == 'confirmado' %}✓ Presença confirmada
+      {% elif minha.status == 'ausente_justificado' %}Ausência justificada
+      {% else %}Ausência registrada{% endif %}
+    </span>
+    <span style="font-size:0.8rem; color:var(--texto-muted);">Respondido em {{ minha.respondido_em }}</span>
+    <span style="margin-left:auto; font-size:0.8rem; color:var(--texto-muted); cursor:pointer;"
+          onclick="document.getElementById('form-resposta').style.display='block'; this.style.display='none';">Alterar resposta</span>
+  </div>
+  {% if minha.justificativa %}
+  <p style="margin-top:0.75rem; font-size:0.85rem; color:var(--texto-muted);">Justificativa: {{ minha.justificativa }}</p>
+  {% endif %}
+  {% endif %}
+
+  <form method="POST" action="{{ url_for('presenca_responder', rid=reuniao.id) }}"
+        id="form-resposta"
+        {% if minha and minha.status != 'pendente' %}style="display:none; margin-top:1rem;"{% endif %}>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+      <button type="submit" name="status" value="confirmado"
+              class="btn" style="background:rgba(74,222,128,0.15); color:var(--verde); border:1px solid rgba(74,222,128,0.3);">
+        ✓ Vou comparecer
+      </button>
+      <button type="submit" name="status" value="ausente"
+              class="btn" style="background:transparent; color:var(--vermelho); border:1px solid rgba(248,113,113,0.3);">
+        ✕ Não vou
+      </button>
+    </div>
+    <div style="display:flex; gap:0.5rem; align-items:flex-end;">
+      <label style="flex:1; font-size:0.78rem; color:var(--texto-muted); text-transform:uppercase; letter-spacing:0.07em;">
+        Justificativa (opcional)
+        <input type="text" name="justificativa" placeholder="Motivo da ausência..."
+               style="margin-top:0.35rem; width:100%; background:var(--superficie2); border:1px solid var(--borda); border-radius:6px; color:var(--texto); padding:0.5rem 0.85rem; font-size:0.9rem; outline:none; font-family:inherit;" />
+      </label>
+      <button type="submit" name="status" value="ausente_justificado" class="btn secundario" style="padding:0.5rem 1rem;">
+        Justificar ausência
+      </button>
+    </div>
+  </form>
+</div>
+{% else %}
+{# REUNIÃO PASSADA: só mostra minha resposta #}
+{% if minha %}
+<div style="background:var(--superficie); border:1px solid var(--borda); border-radius:10px; padding:1rem 1.5rem; margin-bottom:1.75rem; display:flex; align-items:center; gap:1rem;">
+  <span class="sbadge sbadge-{{ minha.status if minha.status != 'pendente' else 'ausente' }}">
+    {% if minha.status == 'confirmado' %}✓ Presente
+    {% elif minha.status == 'ausente_justificado' %}Justificado
+    {% else %}Ausente{% endif %}
+  </span>
+  {% if minha.justificativa %}<span style="font-size:0.85rem; color:var(--texto-muted);">{{ minha.justificativa }}</span>{% endif %}
+</div>
+{% endif %}
+{% endif %}
+
+{# ── LISTA DE PRESENÇA ── #}
+<div class="secao-titulo">Lista de presença ({{ lista | length }} membros)</div>
+
+{% set confirmados = lista | selectattr('status','eq','confirmado') | list | length %}
+{% set pendentes   = lista | selectattr('status','eq','pendente')   | list | length %}
+
+<div style="display:flex; gap:1.25rem; margin-bottom:1rem; flex-wrap:wrap;">
+  <span style="font-size:0.82rem;"><span style="color:var(--verde); font-weight:700;">{{ confirmados }}</span> <span style="color:var(--texto-muted);">confirmados</span></span>
+  <span style="font-size:0.82rem;"><span style="color:var(--texto-muted); font-weight:700;">{{ pendentes }}</span> <span style="color:var(--texto-muted);">pendentes</span></span>
+  <span style="font-size:0.82rem;"><span style="color:var(--vermelho); font-weight:700;">{{ lista | length - confirmados - pendentes }}</span> <span style="color:var(--texto-muted);">ausências</span></span>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Membro</th>
+      <th>Status</th>
+      {% if session.get('role') == 'admin' %}<th>Justificativa</th><th>Respondido</th>{% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in lista %}
+    <tr>
+      <td style="font-weight:500;">{{ p.nome }}</td>
+      <td>
+        <span class="sbadge sbadge-{{ p.status }}">
+          {% if p.status == 'confirmado' %}✓ Confirmado
+          {% elif p.status == 'ausente_justificado' %}Justificado
+          {% elif p.status == 'ausente' %}Ausente
+          {% else %}Pendente{% endif %}
+        </span>
+      </td>
+      {% if session.get('role') == 'admin' %}
+      <td style="font-size:0.85rem; color:var(--texto-muted);">{{ p.justificativa or '—' }}</td>
+      <td style="font-size:0.8rem; color:var(--texto-muted);">{{ p.respondido_em or '—' }}</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

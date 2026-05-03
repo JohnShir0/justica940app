@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<section class="hero">
+  <h2>Capítulo <span>Justiça de Cambé</span> — N940</h2>
+  <p>A Ordem DeMolay forma jovens com base nos princípios de justiça, fraternidade e integridade de caráter.</p>
+  <div class="hero-btns">
+    <a href="{{ url_for('membros') }}" class="btn">Ver Membros</a>
+    <a href="{{ url_for('eventos') }}" class="btn secundario">Ver Eventos</a>
+  </div>
+</section>
+
+<section class="cards-home">
+  <div class="card">
+    <div class="card-icon">⚖️</div>
+    <h3>Justiça</h3>
+    <p>Agimos com equidade e integridade, valorizando a verdade e o bem comum em todas as nossas ações.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">🤝</div>
+    <h3>Fraternidade</h3>
+    <p>Cultivamos laços de amizade e companheirismo entre os jovens membros do capítulo.</p>
+  </div>
+  <div class="card">
+    <div class="card-icon">✨</div>
+    <h3>Integridade</h3>
+    <p>Buscamos agir com honestidade e valores elevados em nossas vidas pessoais e coletivas.</p>
+  </div>
+</section>
+
+{% endblock %}

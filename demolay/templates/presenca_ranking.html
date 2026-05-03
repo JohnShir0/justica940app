@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo">
+  <h2>Ranking de Assiduidade</h2>
+</div>
+
+{# ── FILTROS ── #}
+<div class="filtros">
+  <a href="{{ url_for('presenca_ranking', periodo='mensal') }}"
+     class="filtro-btn {% if periodo == 'mensal' %}ativo{% endif %}">Este mês</a>
+  <a href="{{ url_for('presenca_ranking', periodo='trimestral') }}"
+     class="filtro-btn {% if periodo == 'trimestral' %}ativo{% endif %}">Últimos 90 dias</a>
+  <a href="{{ url_for('presenca_ranking', periodo='anual') }}"
+     class="filtro-btn {% if periodo == 'anual' %}ativo{% endif %}">Este ano</a>
+</div>
+
+{% if ranking %}
+<div style="background:var(--superficie); border:1px solid var(--borda); border-radius:12px; overflow:hidden;">
+
+  {# ── TOP 3 DESTAQUE ── #}
+  {% if ranking | length >= 1 %}
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1px; background:var(--borda); border-bottom:1px solid var(--borda);">
+    {% for r in ranking[:3] %}
+    <div style="background:var(--superficie); padding:1.5rem; text-align:center;">
+      <div style="font-size:1.75rem; margin-bottom:0.4rem;">
+        {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% else %}🥉{% endif %}
+      </div>
+      <div style="font-size:0.9rem; font-weight:600; color:var(--texto); margin-bottom:0.2rem;">{{ r.nome }}</div>
+      <div style="font-size:1.5rem; font-weight:700;
+                  color:{% if r.taxa >= 75 %}var(--verde){% elif r.taxa >= 50 %}#fbbf24{% else %}var(--vermelho){% endif %};">
+        {{ r.taxa }}%
+      </div>
+      <div style="font-size:0.75rem; color:var(--texto-muted); margin-top:0.1rem;">{{ r.confirmados }}/{{ r.total }} reuniões</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# ── RANKING COMPLETO ── #}
+  {% for r in ranking %}
+  <div class="rank-row">
+    <div class="rank-pos">
+      {% if loop.index == 1 %}🥇
+      {% elif loop.index == 2 %}🥈
+      {% elif loop.index == 3 %}🥉
+      {% else %}<span style="color:var(--texto-muted); font-size:0.85rem;">{{ loop.index }}</span>
+      {% endif %}
+    </div>
+
+    <div class="rank-nome">{{ r.nome }}</div>
+
+    <div class="rank-barra-wrap">
+      <div class="barra" style="flex:1;">
+        <div class="barra-fill"
+             style="width:{{ r.taxa }}%;
+                    background:{% if r.taxa >= 75 %}var(--verde){% elif r.taxa >= 50 %}#fbbf24{% else %}var(--vermelho){% endif %};">
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:1.25rem; flex-shrink:0;">
+      <div class="rank-taxa"
+           style="color:{% if r.taxa >= 75 %}var(--verde){% elif r.taxa >= 50 %}#fbbf24{% else %}var(--vermelho){% endif %};">
+        {{ r.taxa }}%
+      </div>
+      <div style="display:flex; gap:0.5rem; font-size:0.78rem;">
+        <span title="Confirmados" style="color:var(--verde);">✓ {{ r.confirmados }}</span>
+        <span title="Justificadas" style="color:#fbbf24;">J {{ r.justificadas }}</span>
+        <span title="Ausentes" style="color:var(--vermelho);">✕ {{ r.ausentes }}</span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<p class="vazio">Nenhum dado para o período selecionado.</p>
+{% endif %}
+
+{% endblock %}

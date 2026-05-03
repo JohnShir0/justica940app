@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="chat-wrap">
+  <div class="chat-header">
+    <h2>Chat Geral</h2>
+    <span class="chat-status" id="status">conectando...</span>
+  </div>
+
+  <div class="chat-mensagens" id="mensagens"></div>
+
+  <form class="chat-form" id="form-chat">
+    <input type="text" id="input-msg" placeholder="Digite uma mensagem..." autocomplete="off" required />
+    <button type="submit" class="btn">Enviar</button>
+  </form>
+</div>
+
+<script>
+  const meuNome = {{ session.nome | tojson }};
+  let ultimoId = 0;
+  let primeiraVez = true;
+
+  const lista = document.getElementById("mensagens");
+  const status = document.getElementById("status");
+
+  function adicionarBolha(msg) {
+    const sou = msg.autor === meuNome;
+    const div = document.createElement("div");
+    div.className = "bolha-wrap " + (sou ? "minha" : "outra");
+    div.innerHTML = `
+      ${!sou ? `<div class="bolha-avatar">${msg.autor[0].toUpperCase()}</div>` : ""}
+      <div class="bolha">
+        ${!sou ? `<span class="bolha-autor">${msg.autor}</span>` : ""}
+        <p>${msg.texto}</p>
+        <span class="bolha-hora">${msg.criado_em.slice(11, 16)}</span>
+      </div>
+    `;
+    lista.appendChild(div);
+    lista.scrollTop = lista.scrollHeight;
+  }
+
+  async function buscar() {
+    try {
+      const resp = await fetch(`/chat/mensagens?desde=${ultimoId}`);
+      const data = await resp.json();
+      for (const msg of data.mensagens) {
+        adicionarBolha(msg);
+        ultimoId = msg.id;
+      }
+      if (primeiraVez) {
+        status.textContent = "conectado";
+        status.classList.add("online");
+        primeiraVez = false;
+      }
+    } catch {
+      status.textContent = "erro de conexão";
+    }
+  }
+
+  document.getElementById("form-chat").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const input = document.getElementById("input-msg");
+    const texto = input.value.trim();
+    if (!texto) return;
+    input.value = "";
+    await fetch("/chat/enviar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ texto })
+    });
+    buscar();
+  });
+
+  buscar();
+  setInterval(buscar, 2000);
+</script>
+
+{% endblock %}

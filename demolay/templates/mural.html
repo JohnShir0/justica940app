@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo">
+  <h2>Mural do Capítulo</h2>
+</div>
+
+{% if session.get('nome') %}
+<form method="POST" action="{{ url_for('publicar') }}" class="mural-form">
+  <textarea name="conteudo" placeholder="Compartilhe um aviso, notícia ou informação com o capítulo..." required></textarea>
+  <button type="submit" class="btn">Publicar</button>
+</form>
+{% else %}
+<div class="aviso-login">
+  <a href="{{ url_for('entrar', next=url_for('mural')) }}" class="btn">Entrar para publicar</a>
+</div>
+{% endif %}
+
+<div class="feed">
+  {% for post in posts %}
+  <div class="post-card">
+    <div class="post-header">
+      <div class="post-avatar">{{ post.autor[0].upper() }}</div>
+      <div>
+        <strong>{{ post.autor }}</strong>
+        <span class="post-hora">{{ post.criado_em }}</span>
+      </div>
+      {% if session.get('nome') %}
+      <a href="{{ url_for('deletar_post', id=post.id) }}"
+         class="btn-danger post-del"
+         onclick="return confirm('Remover este post?')">✕</a>
+      {% endif %}
+    </div>
+    <p class="post-conteudo">{{ post.conteudo }}</p>
+  </div>
+  {% else %}
+  <p class="vazio">Nenhum post ainda. Seja o primeiro a publicar!</p>
+  {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="entrar-wrap">
+  <div class="entrar-box">
+    <div class="logo-symbol" style="font-size:2.5rem; color:var(--verde); text-align:center; margin-bottom:1rem;">⚖</div>
+    <h2>Acessar o Capítulo</h2>
+    <p>Apenas membros autorizados podem entrar.</p>
+    <form method="POST" class="formulario" style="background:none; border:none; padding:0; text-align:left;">
+      <label>Usuário
+        <input type="text" name="username" required autofocus placeholder="seu_usuario" autocomplete="username" />
+      </label>
+      <label>Senha
+        <input type="password" name="senha" required placeholder="••••••••" autocomplete="current-password" />
+      </label>
+      <button type="submit" class="btn" style="width:100%; margin-top:0.5rem;">Entrar</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo" style="margin-bottom:1.5rem;">
+  <h2>XP &amp; Gamificação</h2>
+  <div style="display:flex;gap:0.5rem;">
+    <a href="{{ url_for('xp_ranking') }}" class="btn secundario">Ranking</a>
+    {% if session.get('role') == 'admin' %}
+      <a href="{{ url_for('xp_admin') }}" class="btn">Painel Admin</a>
+    {% endif %}
+  </div>
+</div>
+
+{# ── STAT CARDS ── #}
+<div class="stat-grid" style="margin-bottom:2rem;">
+  <div class="stat-card">
+    <div class="stat-label">XP Total</div>
+    <div class="stat-value c-verde">{{ meu_xp }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">XP Este Mês</div>
+    <div class="stat-value">{{ meu_xp_mes }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Posição no Mês</div>
+    <div class="stat-value">{{ minha_pos }}º</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Conquistas</div>
+    <div class="stat-value c-amarelo">{{ meus_badges | length }}</div>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:2rem;">
+
+  {# ── MEU NÍVEL ── #}
+  <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;">
+    <div class="secao-titulo" style="margin-bottom:1.25rem;">Meu Nível</div>
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.04);border:2px solid {{ nivel.cor }};display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;color:{{ nivel.cor }};flex-shrink:0;">
+        {{ nivel.numero }}
+      </div>
+      <div>
+        <div style="font-size:1.2rem;font-weight:700;color:var(--texto);">{{ session.nome }}</div>
+        <span class="nivel-chip" style="color:{{ nivel.cor }};border-color:{{ nivel.cor }}33;background:{{ nivel.cor }}12;">
+          {{ nivel.nome }}
+        </span>
+      </div>
+    </div>
+    <div style="font-size:0.78rem;color:var(--texto-muted);margin-bottom:0.4rem;display:flex;justify-content:space-between;">
+      <span>{{ meu_xp }} XP</span>
+      {% if nivel.proximo %}
+        <span>{{ nivel.proximo_limiar }} XP — {{ nivel.proximo }}</span>
+      {% else %}
+        <span style="color:{{ nivel.cor }};">Nível máximo</span>
+      {% endif %}
+    </div>
+    <div class="xp-bar"><div class="xp-bar-fill" style="width:{{ nivel.progresso }}%;background:{{ nivel.cor }};"></div></div>
+    {% if nivel.falta > 0 %}
+    <div style="font-size:0.72rem;color:var(--texto-muted);margin-top:0.4rem;">Faltam {{ nivel.falta }} XP para {{ nivel.proximo }}</div>
+    {% endif %}
+
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--borda);">
+      <div class="secao-titulo" style="margin-bottom:0.75rem;">Atividade Recente</div>
+      {% if atividades %}
+        {% for a in atividades %}
+        <div class="atividade-item">
+          <div class="atividade-icone">{{ a.icone }}</div>
+          <div class="atividade-info">
+            <div class="atividade-desc">{{ a.descricao }}</div>
+            <div class="atividade-cat">{{ a.cat }} &nbsp;·&nbsp; {{ a.criado_em[:10] }}</div>
+          </div>
+          <span class="xp-pts-badge">+{{ a.pontos }}</span>
+        </div>
+        {% endfor %}
+      {% else %}
+        <p style="color:var(--texto-muted);font-size:0.85rem;">Nenhuma atividade registrada.</p>
+      {% endif %}
+    </div>
+
+    <div style="margin-top:1rem;">
+      <a href="{{ url_for('xp_perfil') }}" class="btn secundario" style="width:100%;text-align:center;display:block;">Ver perfil completo</a>
+    </div>
+  </div>
+
+  {# ── RANKING DO MÊS ── #}
+  <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;overflow:hidden;">
+    <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between;">
+      <div class="secao-titulo" style="margin:0;">Ranking — {{ mes }}</div>
+      <a href="{{ url_for('xp_ranking') }}" style="font-size:0.78rem;color:var(--texto-muted);text-decoration:none;">Ver completo →</a>
+    </div>
+
+    {% if ranking %}
+      {% for r in ranking %}
+      <div class="xp-ranking-row {% if r.e_eu %}destaque{% endif %}">
+        <div class="xp-pos">
+          {% if r.pos == 1 %}🥇
+          {% elif r.pos == 2 %}🥈
+          {% elif r.pos == 3 %}🥉
+          {% else %}<span style="color:var(--texto-muted);font-size:0.8rem;">{{ r.pos }}</span>
+          {% endif %}
+        </div>
+        <div class="xp-membro">
+          <div class="xp-membro-nome">{{ r.nome }}{% if r.e_eu %} <span style="color:var(--verde);font-size:0.72rem;">(você)</span>{% endif %}</div>
+          <span class="nivel-chip" style="color:{{ r.nivel.cor }};border-color:{{ r.nivel.cor }}33;background:{{ r.nivel.cor }}10;font-size:0.65rem;padding:0.1rem 0.45rem;">{{ r.nivel.nome }}</span>
+        </div>
+        <div class="xp-pts">{{ r.xp_mes }} <span style="font-size:0.7rem;color:var(--texto-muted);font-weight:400;">XP</span></div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="vazio">Sem atividade este mês.</p>
+    {% endif %}
+  </div>
+
+</div>{# .grid-2 #}
+
+{# ── MINHAS CONQUISTAS ── #}
+{% if meus_badges %}
+<div style="margin-bottom:2rem;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+    <div class="secao-titulo" style="margin:0;">Conquistas Recentes</div>
+    <a href="{{ url_for('xp_perfil') }}" style="font-size:0.78rem;color:var(--texto-muted);text-decoration:none;">Ver todas →</a>
+  </div>
+  <div class="badge-grid">
+    {% for b in meus_badges %}
+    <div class="badge-card ganhou">
+      <div class="badge-icone">{{ b.icone }}</div>
+      <div class="badge-nome">{{ b.nome }}</div>
+      <div class="badge-desc">{{ b.descricao }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

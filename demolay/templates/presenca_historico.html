@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo">
+  <h2>Histórico — {{ usuario.nome }}</h2>
+  <a href="{{ url_for('presenca_dashboard') }}" class="btn secundario">← Voltar</a>
+</div>
+
+{# ── SELETOR DE MEMBRO (admin) ── #}
+{% if todos %}
+<div style="margin-bottom:1.5rem;">
+  <form method="GET" style="display:flex; align-items:center; gap:0.75rem;">
+    <label style="font-size:0.78rem; color:var(--texto-muted); text-transform:uppercase; letter-spacing:0.07em;">Ver histórico de</label>
+    <select name="" onchange="window.location='/presenca/historico/'+this.value"
+            style="background:var(--superficie2); border:1px solid var(--borda); border-radius:6px; color:var(--texto); padding:0.4rem 0.8rem; font-size:0.875rem; outline:none; cursor:pointer;">
+      {% for u in todos %}
+      <option value="{{ u.id }}" {% if u.id == user_id %}selected{% endif %}>{{ u.nome }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+{% endif %}
+
+{# ── STATS ── #}
+<div class="stat-grid" style="margin-bottom:2rem;">
+  <div class="stat-card">
+    <div class="stat-label">Reuniões</div>
+    <div class="stat-value">{{ total }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Confirmações</div>
+    <div class="stat-value c-verde">{{ confirmados }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Just. Ausência</div>
+    <div class="stat-value c-amarelo">{{ justificadas }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Faltas</div>
+    <div class="stat-value c-vermelho">{{ ausentes }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Taxa de Presença</div>
+    <div class="stat-value {% if taxa >= 75 %}c-verde{% elif taxa >= 50 %}c-amarelo{% else %}c-vermelho{% endif %}">{{ taxa }}%</div>
+    <div class="barra-wrap">
+      <div class="barra"><div class="barra-fill" style="width:{{ taxa }}%"></div></div>
+    </div>
+  </div>
+</div>
+
+{# ── TABELA ── #}
+{% if historico %}
+<table>
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Reunião</th>
+      <th>Tipo</th>
+      <th>Status</th>
+      <th>Justificativa</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for h in historico %}
+    <tr>
+      <td style="white-space:nowrap; color:var(--texto-muted); font-size:0.85rem;">
+        {{ h.data[8:] }}/{{ h.data[5:7] }}/{{ h.data[:4] }}
+      </td>
+      <td>
+        <a href="{{ url_for('presenca_detalhe', rid=h.id) }}"
+           style="color:var(--texto); text-decoration:none; font-weight:500; font-size:0.9rem;">
+          {{ h.titulo }}
+        </a>
+      </td>
+      <td><span class="tipo-badge">{{ h.tipo }}</span></td>
+      <td>
+        <span class="sbadge sbadge-{{ h.status_real }}">
+          {% if h.status_real == 'confirmado' %}✓ Presente
+          {% elif h.status_real == 'ausente_justificado' %}Justificado
+          {% elif h.status_real == 'pendente' %}Pendente
+          {% else %}Ausente{% endif %}
+        </span>
+      </td>
+      <td style="font-size:0.85rem; color:var(--texto-muted);">{{ h.justificativa or '—' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="vazio">Nenhum histórico encontrado.</p>
+{% endif %}
+
+{% endblock %}

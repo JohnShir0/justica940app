@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo">
+  <h2>Membros do Capítulo</h2>
+  <a href="{{ url_for('novo_membro') }}" class="btn">+ Novo Membro</a>
+</div>
+
+{% if membros %}
+<table>
+  <thead>
+    <tr>
+      <th>Nome</th>
+      <th>Cargo</th>
+      <th>ID DeMolay</th>
+      <th>Ação</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in membros %}
+    <tr>
+      <td>{{ m.nome }}</td>
+      <td><span class="badge">{{ m.cargo }}</span></td>
+      <td>{{ m.id_demolay or '—' }}</td>
+      <td>
+        <a href="{{ url_for('deletar_membro', id=m.id) }}"
+           class="btn-danger"
+           onclick="return confirm('Remover {{ m.nome }}?')">Remover</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="vazio">Nenhum membro cadastrado ainda.</p>
+{% endif %}
+
+{% endblock %}

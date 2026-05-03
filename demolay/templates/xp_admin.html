@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="pagina-topo">
+  <h2>Admin — Gamificação</h2>
+  <a href="{{ url_for('xp_dashboard') }}" class="btn secundario">← Dashboard</a>
+</div>
+
+<div class="grid-2" style="margin-bottom:2rem;">
+
+  {# ── CONCEDER PONTOS ── #}
+  <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;">
+    <div class="secao-titulo" style="margin-bottom:1.25rem;">Conceder XP Manualmente</div>
+    <form method="POST" action="{{ url_for('xp_admin_pontos') }}" style="display:flex;flex-direction:column;gap:1rem;">
+      <label style="font-size:0.78rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+        Membro
+        <select name="usuario_id" required style="margin-top:0.35rem;width:100%;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.5rem 0.75rem;font-size:0.9rem;outline:none;">
+          <option value="">Selecione...</option>
+          {% for u in usuarios %}
+          <option value="{{ u.id }}">{{ u.nome }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label style="font-size:0.78rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+        Categoria
+        <select name="codigo" required style="margin-top:0.35rem;width:100%;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.5rem 0.75rem;font-size:0.9rem;outline:none;">
+          <option value="">Selecione...</option>
+          {% for c in categorias %}
+          <option value="{{ c.codigo }}">{{ c.icone }} {{ c.nome }} ({{ c.pontos }} pts)</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:0.75rem;align-items:end;">
+        <label style="font-size:0.78rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+          Descrição / Motivo
+          <input type="text" name="descricao" placeholder="Ex: Voluntário na ação de maio..."
+                 style="margin-top:0.35rem;width:100%;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.5rem 0.75rem;font-size:0.9rem;outline:none;font-family:inherit;" />
+        </label>
+        <label style="font-size:0.78rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+          Pts (opcional)
+          <input type="number" name="pontos_custom" min="1" placeholder="auto"
+                 style="margin-top:0.35rem;width:5rem;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.5rem 0.75rem;font-size:0.9rem;outline:none;text-align:center;" />
+        </label>
+      </div>
+      <button type="submit" class="btn">Conceder XP</button>
+    </form>
+  </div>
+
+  {# ── CONFIGURAR PESOS ── #}
+  <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;">
+    <div class="secao-titulo" style="margin-bottom:0.75rem;">Configurar Pontuação por Categoria</div>
+    {% for c in categorias %}
+    <form method="POST" action="{{ url_for('xp_admin_categoria', cat_id=c.id) }}"
+          style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid var(--borda);">
+      <span style="font-size:1rem;width:1.5rem;text-align:center;flex-shrink:0;">{{ c.icone }}</span>
+      <span style="flex:1;font-size:0.875rem;color:var(--texto);">{{ c.nome }}</span>
+      <input type="number" name="pontos" value="{{ c.pontos }}" min="0" class="xp-edit-input" />
+      <button type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;">✓</button>
+    </form>
+    {% endfor %}
+  </div>
+
+</div>
+
+{# ── LOG RECENTE ── #}
+<div class="secao-titulo" style="margin-bottom:0.75rem;">Log Recente de XP (últimas 20 ações)</div>
+{% if recentes %}
+<table>
+  <thead>
+    <tr><th>Membro</th><th>Categoria</th><th>Pts</th><th>Descrição</th><th>Data</th></tr>
+  </thead>
+  <tbody>
+    {% for r in recentes %}
+    <tr>
+      <td style="font-weight:500;">{{ r.membro }}</td>
+      <td><span style="font-size:0.9rem;">{{ r.icone }}</span> {{ r.cat }}</td>
+      <td><span class="xp-pts-badge">+{{ r.pontos }}</span></td>
+      <td style="color:var(--texto-muted);font-size:0.85rem;">{{ r.descricao or '—' }}</td>
+      <td style="color:var(--texto-muted);font-size:0.8rem;white-space:nowrap;">{{ r.criado_em[:16] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="vazio">Nenhum XP concedido ainda.</p>
+{% endif %}
+
+{% endblock %}
