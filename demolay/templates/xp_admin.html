@@ -79,6 +79,13 @@
 </div>
 
 {# ── GRAUS / NÍVEIS ── #}
+{# Forms fora da tabela — inputs usam form="id" para associação válida em HTML5 #}
+{% for n in niveis_db %}
+<form id="nivel-edit-{{ n.id }}" method="POST" action="{{ url_for('xp_admin_nivel_editar', nid=n.id) }}"></form>
+<form id="nivel-del-{{ n.id }}"  method="POST" action="{{ url_for('xp_admin_nivel_deletar', nid=n.id) }}"
+      onsubmit="return confirm('Remover o grau {{ n.nome }}?')"></form>
+{% endfor %}
+
 <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
   <div class="secao-titulo" style="margin-bottom:1rem;">Graus / Níveis de XP</div>
   <div style="overflow-x:auto;">
@@ -94,35 +101,28 @@
     </thead>
     <tbody>
     {% for n in niveis_db %}
-    <form method="POST" action="{{ url_for('xp_admin_nivel_editar', nid=n.id) }}">
     <tr>
       <td style="padding:0.5rem 0.6rem;color:var(--texto-muted);font-size:0.8rem;">{{ loop.index }}</td>
       <td style="padding:0.5rem 0.4rem;">
-        <input type="text" name="nome" value="{{ n.nome }}" required
+        <input form="nivel-edit-{{ n.id }}" type="text" name="nome" value="{{ n.nome }}" required
                style="width:100%;min-width:110px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.35rem 0.6rem;font-size:0.875rem;outline:none;font-family:inherit;" />
       </td>
       <td style="padding:0.5rem 0.4rem;">
-        <input type="number" name="limiar" value="{{ n.limiar }}" min="0"
-               {% if n.limiar == 0 %}readonly style="width:5.5rem;background:transparent;border:1px solid var(--borda);border-radius:6px;color:var(--texto-muted);padding:0.35rem 0.6rem;font-size:0.875rem;outline:none;text-align:center;"
-               {% else %}style="width:5.5rem;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.35rem 0.6rem;font-size:0.875rem;outline:none;text-align:center;"{% endif %} />
+        <input form="nivel-edit-{{ n.id }}" type="number" name="limiar" value="{{ n.limiar }}" min="0"
+               {% if n.limiar == 0 %}readonly {% endif %}
+               style="width:5.5rem;background:{% if n.limiar == 0 %}transparent{% else %}var(--superficie2){% endif %};border:1px solid var(--borda);border-radius:6px;color:{% if n.limiar == 0 %}var(--texto-muted){% else %}var(--texto){% endif %};padding:0.35rem 0.6rem;font-size:0.875rem;outline:none;text-align:center;" />
       </td>
       <td style="padding:0.5rem 0.4rem;">
         <div style="display:flex;align-items:center;gap:0.5rem;">
-          <input type="color" name="cor" value="{{ n.cor }}"
+          <input form="nivel-edit-{{ n.id }}" type="color" name="cor" value="{{ n.cor }}"
                  style="width:2.5rem;height:2rem;border:1px solid var(--borda);border-radius:6px;background:var(--superficie2);cursor:pointer;padding:0.1rem;" />
           <span style="font-size:0.75rem;color:{{ n.cor }};font-weight:600;">{{ n.nome }}</span>
         </div>
       </td>
-      <td style="padding:0.5rem 0.4rem;white-space:nowrap;display:flex;gap:0.4rem;align-items:center;">
-        <button type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;">Salvar</button>
+      <td style="padding:0.5rem 0.4rem;white-space:nowrap;">
+        <button form="nivel-edit-{{ n.id }}" type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;">Salvar</button>
         {% if n.limiar != 0 %}
-        </form>
-        <form method="POST" action="{{ url_for('xp_admin_nivel_deletar', nid=n.id) }}"
-              onsubmit="return confirm('Remover o grau {{ n.nome }}?')">
-          <button type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;background:var(--vermelho);border-color:var(--vermelho);">✕</button>
-        </form>
-        {% else %}
-        </form>
+        <button form="nivel-del-{{ n.id }}" type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;background:var(--vermelho);border-color:var(--vermelho);margin-left:0.3rem;">✕</button>
         {% endif %}
       </td>
     </tr>
