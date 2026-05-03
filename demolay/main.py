@@ -1115,6 +1115,7 @@ def xp_admin_categoria(cat_id):
     return redirect(url_for("xp_admin"))
 
 
+init_db()
+
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)
