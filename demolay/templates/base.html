@@ -17,7 +17,7 @@
           <p>Capítulo Justiça de Cambé &mdash; N940</p>
         </div>
       </div>
-      <nav>
+      <nav id="navPrincipal">
         <a href="{{ url_for('index') }}"   class="{{ 'ativo' if request.endpoint == 'index' }}">Início</a>
         <a href="{{ url_for('membros') }}" class="{{ 'ativo' if 'membro' in request.endpoint }}">Membros</a>
         <a href="{{ url_for('eventos') }}" class="{{ 'ativo' if 'evento' in request.endpoint }}">Eventos</a>
@@ -28,6 +28,17 @@
         {% if session.get('role') == 'admin' %}
           <a href="{{ url_for('admin_usuarios') }}" class="{{ 'ativo' if 'admin' in request.endpoint }}">Usuários</a>
         {% endif %}
+        <div class="nav-usuario-mobile">
+          {% if session.get('user_id') %}
+            <span class="nav-usuario-nome">{{ session.nome }}</span>
+            {% if session.get('role') == 'admin' %}
+              <span class="badge" style="font-size:0.7rem;">Admin</span>
+            {% endif %}
+            <a href="{{ url_for('sair') }}" class="btn-sair">Sair</a>
+          {% else %}
+            <a href="{{ url_for('entrar') }}" class="btn btn-entrar">Entrar</a>
+          {% endif %}
+        </div>
       </nav>
       <div class="usuario">
         {% if session.get('user_id') %}
@@ -40,6 +51,7 @@
           <a href="{{ url_for('entrar') }}" class="btn btn-entrar">Entrar</a>
         {% endif %}
       </div>
+      <button class="menu-toggle" id="menuToggle" aria-label="Abrir menu">&#9776;</button>
     </div>
   </header>
 
@@ -57,5 +69,24 @@
     <p>Ordem DeMolay &mdash; Capítulo Justiça de Cambé N940 &copy; 2026</p>
   </footer>
 
+  <script>
+    (function() {
+      var toggle = document.getElementById('menuToggle');
+      var nav = document.getElementById('navPrincipal');
+      if (!toggle || !nav) return;
+      toggle.addEventListener('click', function() {
+        var aberta = nav.classList.toggle('aberta');
+        toggle.innerHTML = aberta ? '&#x2715;' : '&#9776;';
+        document.body.style.overflow = aberta ? 'hidden' : '';
+      });
+      nav.querySelectorAll('a').forEach(function(a) {
+        a.addEventListener('click', function() {
+          nav.classList.remove('aberta');
+          toggle.innerHTML = '&#9776;';
+          document.body.style.overflow = '';
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
