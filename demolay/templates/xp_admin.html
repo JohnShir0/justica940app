@@ -46,20 +46,52 @@
     </form>
   </div>
 
-  {# ── CONFIGURAR PESOS ── #}
+  {# ── REMOVER PONTOS ── #}
   <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;">
-    <div class="secao-titulo" style="margin-bottom:0.75rem;">Configurar Pontuação por Categoria</div>
-    {% for c in categorias %}
-    <form method="POST" action="{{ url_for('xp_admin_categoria', cat_id=c.id) }}"
-          style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid var(--borda);">
-      <span style="font-size:1rem;width:1.5rem;text-align:center;flex-shrink:0;">{{ c.icone }}</span>
-      <span style="flex:1;font-size:0.875rem;color:var(--texto);">{{ c.nome }}</span>
-      <input type="number" name="pontos" value="{{ c.pontos }}" min="0" class="xp-edit-input" />
-      <button type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;">✓</button>
+    <div class="secao-titulo" style="margin-bottom:1.25rem;color:var(--vermelho);">Remover XP</div>
+    <form method="POST" action="{{ url_for('xp_admin_remover') }}" style="display:flex;flex-direction:column;gap:1rem;"
+          onsubmit="return confirm('Remover XP deste membro?')">
+      <label style="font-size:0.78rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+        Membro
+        <select name="usuario_id" required style="margin-top:0.35rem;width:100%;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.5rem 0.75rem;font-size:0.9rem;outline:none;">
+          <option value="">Selecione...</option>
+          {% for u in usuarios %}
+          <option value="{{ u.id }}">{{ u.nome }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:0.75rem;align-items:end;">
+        <label style="font-size:0.78rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+          Motivo
+          <input type="text" name="descricao" placeholder="Ex: Lançamento incorreto..." required
+                 style="margin-top:0.35rem;width:100%;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.5rem 0.75rem;font-size:0.9rem;outline:none;font-family:inherit;" />
+        </label>
+        <label style="font-size:0.78rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+          Pts
+          <input type="number" name="pontos" min="1" required placeholder="0"
+                 style="margin-top:0.35rem;width:5rem;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.5rem 0.75rem;font-size:0.9rem;outline:none;text-align:center;" />
+        </label>
+      </div>
+      <button type="submit" class="btn" style="background:var(--vermelho);border-color:var(--vermelho);">Remover XP</button>
     </form>
-    {% endfor %}
   </div>
 
+</div>
+
+{# ── CONFIGURAR PESOS ── #}
+<div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
+  <div class="secao-titulo" style="margin-bottom:0.75rem;">Configurar Pontuação por Categoria</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.25rem 1.5rem;">
+  {% for c in categorias %}
+  <form method="POST" action="{{ url_for('xp_admin_categoria', cat_id=c.id) }}"
+        style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid var(--borda);">
+    <span style="font-size:1rem;width:1.5rem;text-align:center;flex-shrink:0;">{{ c.icone }}</span>
+    <span style="flex:1;font-size:0.875rem;color:var(--texto);">{{ c.nome }}</span>
+    <input type="number" name="pontos" value="{{ c.pontos }}" min="0" class="xp-edit-input" />
+    <button type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;">✓</button>
+  </form>
+  {% endfor %}
+  </div>
 </div>
 
 {# ── LOG RECENTE ── #}
@@ -74,7 +106,13 @@
     <tr>
       <td style="font-weight:500;">{{ r.membro }}</td>
       <td><span style="font-size:0.9rem;">{{ r.icone }}</span> {{ r.cat }}</td>
-      <td><span class="xp-pts-badge">+{{ r.pontos }}</span></td>
+      <td>
+        {% if r.pontos < 0 %}
+          <span class="xp-pts-badge" style="background:rgba(239,68,68,0.15);color:var(--vermelho);">{{ r.pontos }}</span>
+        {% else %}
+          <span class="xp-pts-badge">+{{ r.pontos }}</span>
+        {% endif %}
+      </td>
       <td style="color:var(--texto-muted);font-size:0.85rem;">{{ r.descricao or '—' }}</td>
       <td style="color:var(--texto-muted);font-size:0.8rem;white-space:nowrap;">{{ r.criado_em[:16] }}</td>
     </tr>
