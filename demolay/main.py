@@ -1115,6 +1115,37 @@ def xp_admin_pontos():
     return redirect(url_for("xp_admin"))
 
 
+@app.route("/gamificacao/admin/remover", methods=["POST"])
+@admin_required
+def xp_admin_remover():
+    usuario_id = request.form.get("usuario_id", type=int)
+    pontos     = request.form.get("pontos", type=int)
+    descricao  = request.form.get("descricao", "").strip()
+    if not usuario_id or not pontos or pontos <= 0:
+        flash("Preencha todos os campos corretamente.", "erro")
+        return redirect(url_for("xp_admin"))
+    conn = get_db()
+    xp_atual = conn.execute(
+        "SELECT COALESCE(SUM(pontos),0) FROM xp_registros WHERE usuario_id=?", (usuario_id,)
+    ).fetchone()[0]
+    if pontos > xp_atual:
+        flash(f"Impossível remover {pontos} pts — o membro só tem {xp_atual} XP.", "erro")
+        conn.close()
+        return redirect(url_for("xp_admin"))
+    cat = conn.execute("SELECT id FROM xp_categorias WHERE codigo='manual'").fetchone()
+    cat_id = cat["id"] if cat else conn.execute("SELECT id FROM xp_categorias LIMIT 1").fetchone()["id"]
+    conn.execute(
+        "INSERT INTO xp_registros (usuario_id, categoria_id, pontos, descricao, concedido_por)"
+        " VALUES (?,?,?,?,?)",
+        (usuario_id, cat_id, -pontos, descricao or "Remoção de XP", session["user_id"])
+    )
+    conn.commit()
+    nome = conn.execute("SELECT nome FROM usuarios WHERE id=?", (usuario_id,)).fetchone()["nome"]
+    conn.close()
+    flash(f"−{pontos} XP removidos de {nome}.", "aviso")
+    return redirect(url_for("xp_admin"))
+
+
 @app.route("/gamificacao/admin/categoria/<int:cat_id>", methods=["POST"])
 @admin_required
 def xp_admin_categoria(cat_id):
