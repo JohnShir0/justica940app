@@ -123,6 +123,15 @@ def init_db():
         )
         conn.commit()
 
+    # migra colunas de nível no chat
+    chat_cols = [r[1] for r in conn.execute("PRAGMA table_info(mensagens)").fetchall()]
+    if "nivel_nome" not in chat_cols:
+        conn.execute("ALTER TABLE mensagens ADD COLUMN nivel_nome TEXT DEFAULT ''")
+        conn.commit()
+    if "nivel_cor" not in chat_cols:
+        conn.execute("ALTER TABLE mensagens ADD COLUMN nivel_cor TEXT DEFAULT '#9ca3af'")
+        conn.commit()
+
     # migra coluna email -> id_demolay se necessário
     colunas = [r[1] for r in conn.execute("PRAGMA table_info(membros)").fetchall()]
     if "email" in colunas and "id_demolay" not in colunas:
@@ -428,7 +437,13 @@ def enviar_mensagem():
     texto = (dados.get("texto") or "").strip()
     if texto:
         conn = get_db()
-        conn.execute("INSERT INTO mensagens (autor, texto) VALUES (?, ?)", (session["nome"], texto))
+        uid = session["user_id"]
+        xp = conn.execute("SELECT COALESCE(SUM(pontos),0) FROM xp_registros WHERE usuario_id=?", (uid,)).fetchone()[0]
+        nivel = _nivel_info(xp)
+        conn.execute(
+            "INSERT INTO mensagens (autor, texto, nivel_nome, nivel_cor) VALUES (?, ?, ?, ?)",
+            (session["nome"], texto, nivel["nome"], nivel["cor"])
+        )
         conn.commit()
         conn.close()
     return jsonify({"ok": True})
