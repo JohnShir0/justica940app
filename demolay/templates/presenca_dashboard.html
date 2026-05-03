@@ -54,24 +54,33 @@
   {% if proximas %}
   <div style="background:var(--superficie); border:1px solid var(--borda); border-radius:10px; overflow:hidden;">
     {% for r in proximas %}
-    <a href="{{ url_for('presenca_detalhe', rid=r.id) }}"
-       style="display:flex; align-items:center; gap:0.85rem; padding:0.85rem 1.1rem; border-bottom:1px solid var(--borda); text-decoration:none; transition:background 0.15s;"
-       onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
-      <div style="min-width:60px; text-align:center;">
-        <div style="font-size:0.65rem; text-transform:uppercase; color:var(--texto-muted); letter-spacing:0.08em;">{{ r.data[5:7] }}/{{ r.data[:4] }}</div>
-        <div style="font-size:1.1rem; font-weight:700; color:var(--texto);">{{ r.data[8:] }}</div>
-      </div>
-      <div style="flex:1; min-width:0;">
-        <div style="font-size:0.875rem; font-weight:500; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.titulo }}</div>
-        <div style="font-size:0.75rem; color:var(--texto-muted);">{{ r.hora }} &nbsp;·&nbsp; <span class="tipo-badge">{{ r.tipo }}</span></div>
-      </div>
-      <span class="sbadge sbadge-{{ r.meu_status }}">
-        {% if r.meu_status == 'confirmado' %}✓ Confirmado
-        {% elif r.meu_status == 'ausente_justificado' %}Justificado
-        {% elif r.meu_status == 'ausente' %}Ausente
-        {% else %}Pendente{% endif %}
-      </span>
-    </a>
+    <div style="display:flex; align-items:stretch; border-bottom:1px solid var(--borda);">
+      <a href="{{ url_for('presenca_detalhe', rid=r.id) }}"
+         style="flex:1; display:flex; align-items:center; gap:0.85rem; padding:0.85rem 1.1rem; text-decoration:none; transition:background 0.15s; min-width:0;"
+         onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+        <div style="min-width:60px; text-align:center;">
+          <div style="font-size:0.65rem; text-transform:uppercase; color:var(--texto-muted); letter-spacing:0.08em;">{{ r.data[5:7] }}/{{ r.data[:4] }}</div>
+          <div style="font-size:1.1rem; font-weight:700; color:var(--texto);">{{ r.data[8:] }}</div>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:0.875rem; font-weight:500; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.titulo }}</div>
+          <div style="font-size:0.75rem; color:var(--texto-muted);">{{ r.hora }} &nbsp;·&nbsp; <span class="tipo-badge">{{ r.tipo }}</span></div>
+        </div>
+        <span class="sbadge sbadge-{{ r.meu_status }}">
+          {% if r.meu_status == 'confirmado' %}✓ Confirmado
+          {% elif r.meu_status == 'ausente_justificado' %}Justificado
+          {% elif r.meu_status == 'ausente' %}Ausente
+          {% else %}Pendente{% endif %}
+        </span>
+      </a>
+      {% if session.get('role') == 'admin' %}
+      <a href="{{ url_for('presenca_deletar_reuniao', rid=r.id) }}"
+         onclick="return confirm('Remover \'{{ r.titulo }}\' e todos os registros de presença?')"
+         style="display:flex; align-items:center; padding:0 0.85rem; color:var(--vermelho); opacity:0.5; transition:opacity 0.15s; text-decoration:none; border-left:1px solid var(--borda); flex-shrink:0;"
+         onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'"
+         title="Remover reunião">&#x2715;</a>
+      {% endif %}
+    </div>
     {% endfor %}
   </div>
   {% else %}
@@ -85,23 +94,32 @@
   {% if recentes %}
   <div style="background:var(--superficie); border:1px solid var(--borda); border-radius:10px; overflow:hidden;">
     {% for r in recentes %}
-    <a href="{{ url_for('presenca_detalhe', rid=r.id) }}"
-       style="display:flex; align-items:center; gap:0.85rem; padding:0.85rem 1.1rem; border-bottom:1px solid var(--borda); text-decoration:none; transition:background 0.15s;"
-       onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
-      <div style="min-width:60px; text-align:center;">
-        <div style="font-size:0.65rem; text-transform:uppercase; color:var(--texto-muted); letter-spacing:0.08em;">{{ r.data[5:7] }}/{{ r.data[:4] }}</div>
-        <div style="font-size:1.1rem; font-weight:700; color:var(--texto-muted);">{{ r.data[8:] }}</div>
-      </div>
-      <div style="flex:1; min-width:0;">
-        <div style="font-size:0.875rem; font-weight:500; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.titulo }}</div>
-        <div style="font-size:0.75rem; color:var(--texto-muted);">{{ r.hora }}</div>
-      </div>
-      <span class="sbadge sbadge-{{ r.meu_status }}">
-        {% if r.meu_status == 'confirmado' %}✓ Presente
-        {% elif r.meu_status == 'ausente_justificado' %}Justificado
-        {% else %}Ausente{% endif %}
-      </span>
-    </a>
+    <div style="display:flex; align-items:stretch; border-bottom:1px solid var(--borda);">
+      <a href="{{ url_for('presenca_detalhe', rid=r.id) }}"
+         style="flex:1; display:flex; align-items:center; gap:0.85rem; padding:0.85rem 1.1rem; text-decoration:none; transition:background 0.15s; min-width:0;"
+         onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background=''">
+        <div style="min-width:60px; text-align:center;">
+          <div style="font-size:0.65rem; text-transform:uppercase; color:var(--texto-muted); letter-spacing:0.08em;">{{ r.data[5:7] }}/{{ r.data[:4] }}</div>
+          <div style="font-size:1.1rem; font-weight:700; color:var(--texto-muted);">{{ r.data[8:] }}</div>
+        </div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-size:0.875rem; font-weight:500; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ r.titulo }}</div>
+          <div style="font-size:0.75rem; color:var(--texto-muted);">{{ r.hora }}</div>
+        </div>
+        <span class="sbadge sbadge-{{ r.meu_status }}">
+          {% if r.meu_status == 'confirmado' %}✓ Presente
+          {% elif r.meu_status == 'ausente_justificado' %}Justificado
+          {% else %}Ausente{% endif %}
+        </span>
+      </a>
+      {% if session.get('role') == 'admin' %}
+      <a href="{{ url_for('presenca_deletar_reuniao', rid=r.id) }}"
+         onclick="return confirm('Remover \'{{ r.titulo }}\' e todos os registros de presença?')"
+         style="display:flex; align-items:center; padding:0 0.85rem; color:var(--vermelho); opacity:0.5; transition:opacity 0.15s; text-decoration:none; border-left:1px solid var(--borda); flex-shrink:0;"
+         onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.5'"
+         title="Remover reunião">&#x2715;</a>
+      {% endif %}
+    </div>
     {% endfor %}
   </div>
   {% else %}
