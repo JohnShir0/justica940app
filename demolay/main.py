@@ -253,7 +253,56 @@ def sair():
 @app.route("/")
 @login_required
 def index():
-    return render_template("index.html")
+    uid  = session["user_id"]
+    hoje = date.today().isoformat()
+    conn = get_db()
+
+    meu_xp = conn.execute(
+        "SELECT COALESCE(SUM(pontos),0) FROM xp_registros WHERE usuario_id=?", (uid,)
+    ).fetchone()[0]
+    nivel = _nivel_info(meu_xp)
+
+    ranking_xp = conn.execute("""
+        SELECT usuario_id, COALESCE(SUM(pontos),0) AS total
+        FROM xp_registros GROUP BY usuario_id ORDER BY total DESC
+    """).fetchall()
+    minha_pos_xp = next((i + 1 for i, r in enumerate(ranking_xp) if r["usuario_id"] == uid), "—")
+    total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+
+    sp = conn.execute("""
+        SELECT
+            COUNT(r.id) AS total,
+            SUM(CASE WHEN p.status='confirmado' THEN 1 ELSE 0 END) AS confirmados,
+            SUM(CASE WHEN p.status='pendente' AND r.data >= ? THEN 1 ELSE 0 END) AS pendentes
+        FROM presencas p JOIN reunioes r ON r.id=p.reuniao_id
+        WHERE p.usuario_id=?
+    """, (hoje, uid)).fetchone()
+    passadas = (sp["total"] or 0) - (sp["pendentes"] or 0)
+    taxa_presenca = round((sp["confirmados"] or 0) / passadas * 100) if passadas > 0 else 0
+
+    cargo_row = conn.execute(
+        "SELECT cargo FROM membros WHERE LOWER(TRIM(nome))=LOWER(TRIM(?))",
+        (session["nome"],)
+    ).fetchone()
+    cargo_nome = cargo_row["cargo"] if cargo_row else ("Admin" if session.get("role") == "admin" else "Membro")
+
+    proximas = conn.execute("""
+        SELECT r.id, r.titulo, r.data, r.hora, r.tipo,
+               COALESCE(p.status,'pendente') AS meu_status
+        FROM reunioes r
+        LEFT JOIN presencas p ON p.reuniao_id=r.id AND p.usuario_id=?
+        WHERE r.data >= ?
+        ORDER BY r.data ASC LIMIT 3
+    """, (uid, hoje)).fetchall()
+
+    conn.close()
+    return render_template("index.html",
+                           meu_xp=meu_xp, nivel=nivel,
+                           minha_pos_xp=minha_pos_xp,
+                           total_usuarios=total_usuarios,
+                           taxa_presenca=taxa_presenca,
+                           cargo_nome=cargo_nome,
+                           proximas=proximas)
 
 
 @app.route("/membros")
@@ -298,10 +347,18 @@ def deletar_membro(id):
 @app.route("/eventos")
 @login_required
 def eventos():
+    hoje = date.today().isoformat()
+    uid  = session["user_id"]
     conn = get_db()
     lista = conn.execute("SELECT * FROM eventos ORDER BY data").fetchall()
+    reunioes = conn.execute("""
+        SELECT r.*, COALESCE(p.status,'pendente') AS meu_status
+        FROM reunioes r
+        LEFT JOIN presencas p ON p.reuniao_id=r.id AND p.usuario_id=?
+        ORDER BY r.data ASC
+    """, (uid,)).fetchall()
     conn.close()
-    return render_template("eventos.html", eventos=lista)
+    return render_template("eventos.html", eventos=lista, reunioes=reunioes, hoje=hoje)
 
 
 @app.route("/eventos/novo", methods=["GET", "POST"])
@@ -640,8 +697,20 @@ def presenca_nova_reuniao():
             conn.commit()
             conn.close()
             flash(f"'{titulo}' agendado com sucesso!", "sucesso")
-            return redirect(url_for("presenca_reunioes"))
+            next_url = request.args.get("next") or url_for("presenca_reunioes")
+            return redirect(next_url)
     return render_template("presenca_nova_reuniao.html")
+
+
+@app.route("/presenca/reunioes/<int:rid>/deletar")
+@admin_required
+def presenca_deletar_reuniao(rid):
+    conn = get_db()
+    conn.execute("DELETE FROM reunioes WHERE id = ?", (rid,))
+    conn.commit()
+    conn.close()
+    flash("Reunião removida.", "sucesso")
+    return redirect(request.referrer or url_for("eventos"))
 
 
 @app.route("/presenca/reunioes/<int:rid>")
@@ -710,7 +779,8 @@ def presenca_responder(rid):
             "ausente_justificado": "Ausência justificada registrada.",
             "ausente": "Ausência registrada."}
     flash(msgs[status], "sucesso")
-    return redirect(url_for("presenca_detalhe", rid=rid))
+    next_url = request.form.get("next") or url_for("presenca_detalhe", rid=rid)
+    return redirect(next_url)
 
 
 @app.route("/presenca/historico")
