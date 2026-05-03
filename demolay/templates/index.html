@@ -1,31 +1,111 @@
 {% extends "base.html" %}
 {% block conteudo %}
 
-<section class="hero">
-  <h2>Capítulo <span>Justiça de Cambé</span> — N940</h2>
-  <p>A Ordem DeMolay forma jovens com base nos princípios de justiça, fraternidade e integridade de caráter.</p>
-  <div class="hero-btns">
-    <a href="{{ url_for('membros') }}" class="btn">Ver Membros</a>
-    <a href="{{ url_for('eventos') }}" class="btn secundario">Ver Eventos</a>
-  </div>
-</section>
+{# Mapeamento de tipo de reunião para label PT-BR #}
+{% set tipo_label = {
+  'reuniao':    'Reunião',
+  'evento':     'Evento',
+  'cerimonia':  'Cerimônia',
+  'assembleia': 'Assembleia'
+} %}
 
-<section class="cards-home">
-  <div class="card">
-    <div class="card-icon">⚖️</div>
-    <h3>Justiça</h3>
-    <p>Agimos com equidade e integridade, valorizando a verdade e o bem comum em todas as nossas ações.</p>
+<!-- ── CARD DE PERFIL ─────────────────────────────────────────── -->
+<div class="perfil-card">
+  <div class="perfil-avatar">{{ session.nome[0] | upper }}</div>
+
+  <div class="perfil-info">
+    <div class="perfil-nome">{{ session.nome }}</div>
+    <div class="perfil-cargo-row">
+      <span class="perfil-cargo">{{ cargo_nome }}</span>
+      <span class="perfil-nivel" style="color:{{ nivel.cor }};">{{ nivel.nome }}</span>
+    </div>
+
+    <div class="perfil-stats-row">
+      <div class="pstat">
+        <span class="pstat-val">{{ meu_xp }}</span>
+        <span class="pstat-lbl">XP Total</span>
+      </div>
+      <div class="pstat-div"></div>
+      <div class="pstat">
+        <span class="pstat-val">#{{ minha_pos_xp }}<span class="pstat-de">/{{ total_usuarios }}</span></span>
+        <span class="pstat-lbl">Ranking</span>
+      </div>
+      <div class="pstat-div"></div>
+      <div class="pstat">
+        <span class="pstat-val">{{ taxa_presenca }}<span class="pstat-de">%</span></span>
+        <span class="pstat-lbl">Presença</span>
+      </div>
+    </div>
+
+    <div class="xp-barra-wrap">
+      <div class="xp-barra-labels">
+        <span>{{ nivel.nome }}</span>
+        {% if nivel.proximo %}
+        <span class="xp-barra-prox">{{ nivel.proximo }} — {{ nivel.proximo_limiar }} XP</span>
+        {% else %}
+        <span class="xp-barra-prox">Nível máximo</span>
+        {% endif %}
+      </div>
+      <div class="xp-barra-bg">
+        <div class="xp-barra-fill" style="width:{{ nivel.progresso }}%; background:{{ nivel.cor }};"></div>
+      </div>
+      <div class="xp-barra-pct">
+        {{ nivel.progresso }}%
+        {% if nivel.falta > 0 %}<span class="xp-falta"> — faltam {{ nivel.falta }} XP</span>{% endif %}
+      </div>
+    </div>
   </div>
-  <div class="card">
-    <div class="card-icon">🤝</div>
-    <h3>Fraternidade</h3>
-    <p>Cultivamos laços de amizade e companheirismo entre os jovens membros do capítulo.</p>
+
+  <div class="perfil-links">
+    <a href="{{ url_for('xp_perfil') }}" class="btn secundario btn-sm">Ver Perfil XP</a>
+    <a href="{{ url_for('presenca_historico') }}" class="btn secundario btn-sm">Histórico</a>
   </div>
-  <div class="card">
-    <div class="card-icon">✨</div>
-    <h3>Integridade</h3>
-    <p>Buscamos agir com honestidade e valores elevados em nossas vidas pessoais e coletivas.</p>
+</div>
+
+<!-- ── PAINEL DE PRÓXIMAS ATIVIDADES ─────────────────────────── -->
+<div class="dashboard-section">
+  <div class="section-header">
+    <h3>Próximas Atividades</h3>
+    <a href="{{ url_for('eventos') }}" class="btn secundario btn-sm">Ver Todos</a>
   </div>
-</section>
+
+  {% if proximas %}
+  <div class="proximas-grid">
+    {% for r in proximas %}
+    {% set partes = r.data.split('-') %}
+    <div class="proxima-card{% if r.meu_status == 'confirmado' %} confirmado{% endif %}">
+      <div class="proxima-tipo tipo-{{ r.tipo }}">
+        {{ tipo_label.get(r.tipo, r.tipo) }}
+      </div>
+      <div class="proxima-corpo">
+        <div class="proxima-titulo">{{ r.titulo }}</div>
+        <div class="proxima-data">{{ partes[2] }}/{{ partes[1] }}/{{ partes[0] }} &mdash; {{ r.hora }}</div>
+      </div>
+      <div class="proxima-acao">
+        {% if r.meu_status == 'confirmado' %}
+          <span class="badge-presenca confirmado">&#10003; Confirmado</span>
+        {% elif r.meu_status == 'ausente' %}
+          <span class="badge-presenca ausente">Ausente</span>
+          <a href="{{ url_for('presenca_detalhe', rid=r.id) }}" class="btn btn-sm">Detalhes</a>
+        {% else %}
+          <form method="POST" action="{{ url_for('presenca_responder', rid=r.id) }}">
+            <input type="hidden" name="status" value="confirmado">
+            <input type="hidden" name="next" value="{{ url_for('index') }}">
+            <button type="submit" class="btn btn-sm">Confirmar Presença</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="vazio">Nenhuma atividade agendada nos próximos dias.</p>
+  {% if session.get('role') == 'admin' %}
+  <div style="margin-top:1rem;">
+    <a href="{{ url_for('presenca_nova_reuniao') }}" class="btn">+ Agendar Atividade</a>
+  </div>
+  {% endif %}
+  {% endif %}
+</div>
 
 {% endblock %}
