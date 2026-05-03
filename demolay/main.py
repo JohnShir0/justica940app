@@ -129,13 +129,24 @@ def init_db():
         conn.execute("ALTER TABLE membros RENAME COLUMN email TO id_demolay")
         conn.commit()
 
+    # migra cargos antigos para a nova nomenclatura
+    conn.executescript("""
+        UPDATE membros SET cargo = 'Primeiro Conselheiro'  WHERE cargo = 'Conselheiro Senior';
+        UPDATE membros SET cargo = 'Segundo Conselheiro'   WHERE cargo = 'Chanceler';
+        UPDATE membros SET cargo = 'Escrivão'              WHERE cargo IN ('Orador', 'Secretário');
+        UPDATE membros SET cargo = 'Hospitaleiro'          WHERE cargo = 'Capelão';
+        UPDATE membros SET cargo = 'DeMolay Grau 2'        WHERE cargo IN ('Guia', 'Sentinela');
+        UPDATE membros SET cargo = 'DeMolay Iniciático'    WHERE cargo = 'Membro';
+    """)
+    conn.commit()
+
     if conn.execute("SELECT COUNT(*) FROM membros").fetchone()[0] == 0:
         conn.executescript("""
             INSERT INTO membros (nome, cargo, id_demolay) VALUES
                 ('Carlos Eduardo', 'Mestre Conselheiro', 'DML-00123'),
-                ('Rafael Souza', 'Conselheiro Senior', 'DML-00456'),
-                ('Lucas Mendes', 'Chanceler', 'DML-00789'),
-                ('Matheus Lima', 'Orador', 'DML-00321');
+                ('Rafael Souza', 'Primeiro Conselheiro', 'DML-00456'),
+                ('Lucas Mendes', 'Segundo Conselheiro', 'DML-00789'),
+                ('Matheus Lima', 'Escrivão', 'DML-00321');
 
             INSERT INTO eventos (titulo, descricao, data) VALUES
                 ('Reunião Mensal', 'Reunião ordinária do capítulo com todos os membros.', '2026-05-10'),
