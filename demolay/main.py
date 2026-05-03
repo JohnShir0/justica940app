@@ -469,7 +469,7 @@ def buscar_mensagens():
 def admin_usuarios():
     conn = get_db()
     usuarios  = conn.execute("SELECT id, username, nome, role FROM usuarios ORDER BY nome").fetchall()
-    owner_id  = conn.execute("SELECT MIN(id) FROM usuarios").fetchone()[0]
+    owner_id  = conn.execute("SELECT id FROM usuarios WHERE LOWER(TRIM(nome))=LOWER(TRIM(?)) LIMIT 1", (OWNER_NOME,)).fetchone()["id"]
     conn.close()
     return render_template("admin_usuarios.html", usuarios=usuarios, owner_id=owner_id)
 
@@ -505,7 +505,7 @@ def novo_usuario():
 @admin_required
 def deletar_usuario(id):
     conn = get_db()
-    owner_id = conn.execute("SELECT MIN(id) FROM usuarios").fetchone()[0]
+    owner_id = conn.execute("SELECT id FROM usuarios WHERE LOWER(TRIM(nome))=LOWER(TRIM(?)) LIMIT 1", (OWNER_NOME,)).fetchone()["id"]
     if id == owner_id:
         flash("O proprietário do sistema não pode ser removido.", "erro")
         conn.close()
@@ -525,7 +525,7 @@ def deletar_usuario(id):
 @admin_required
 def toggle_admin(id):
     conn = get_db()
-    owner_id = conn.execute("SELECT MIN(id) FROM usuarios").fetchone()[0]
+    owner_id = conn.execute("SELECT id FROM usuarios WHERE LOWER(TRIM(nome))=LOWER(TRIM(?)) LIMIT 1", (OWNER_NOME,)).fetchone()["id"]
     if id == owner_id:
         flash("O proprietário do sistema não pode ser alterado.", "erro")
         conn.close()
@@ -545,6 +545,8 @@ def toggle_admin(id):
 
 
 # ── GAMIFICAÇÃO — CONSTANTES E HELPERS ────────────────────────────────────────
+
+OWNER_NOME = "João Souza"
 
 NIVEIS = [
     (0,    1, "Aprendiz",    "#9ca3af"),
