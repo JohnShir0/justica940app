@@ -27,10 +27,16 @@
     const sou = msg.autor === meuNome;
     const div = document.createElement("div");
     div.className = "bolha-wrap " + (sou ? "minha" : "outra");
+    const nivelNome = msg.nivel_nome || "";
+    const nivelCor  = msg.nivel_cor  || "#9ca3af";
+    const nivelBadge = nivelNome
+      ? `<span class="chat-nivel-badge" style="color:${nivelCor}; border-color:${nivelCor};">${nivelNome}</span>`
+      : "";
     div.innerHTML = `
       ${!sou ? `<div class="bolha-avatar">${msg.autor[0].toUpperCase()}</div>` : ""}
       <div class="bolha">
-        ${!sou ? `<span class="bolha-autor">${msg.autor}</span>` : ""}
+        ${!sou ? `<span class="bolha-autor">${msg.autor}${nivelBadge}</span>` : ""}
+        ${sou && nivelNome ? `<div class="bolha-nivel-meu">${nivelBadge}</div>` : ""}
         <p>${msg.texto}</p>
         <span class="bolha-hora">${msg.criado_em.slice(11, 16)}</span>
       </div>
