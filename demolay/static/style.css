@@ -936,3 +936,211 @@ footer {
 }
 
 .xp-edit-input:focus { border-color: rgba(74,222,128,0.5); }
+
+/* ── MENU HAMBÚRGUER ── */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  color: var(--texto);
+  cursor: pointer;
+  padding: 0.45rem 0.7rem;
+  font-size: 1.15rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.menu-toggle:hover {
+  border-color: rgba(255,255,255,0.2);
+  color: var(--verde);
+}
+
+.nav-usuario-mobile {
+  display: none;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  /* Header */
+  header { padding: 0 1rem; }
+
+  .header-inner { height: 56px; }
+
+  .menu-toggle { display: block; }
+
+  .usuario { display: none; }
+
+  nav {
+    display: none;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.97);
+    flex-direction: column;
+    padding: 1rem 1rem 0;
+    gap: 0.2rem;
+    z-index: 999;
+    overflow-y: auto;
+    border-top: 1px solid var(--borda);
+  }
+
+  nav.aberta { display: flex; }
+
+  nav a {
+    padding: 0.85rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 8px;
+  }
+
+  .nav-usuario-mobile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+    padding: 1rem 0.5rem;
+    border-top: 1px solid var(--borda);
+  }
+
+  .nav-usuario-nome {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--texto);
+    font-weight: 500;
+  }
+
+  /* Main */
+  main {
+    margin: 1.25rem auto;
+    padding: 0 1rem;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 2.5rem 0.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero h2 { font-size: 1.5rem; }
+
+  .hero p {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Cards home */
+  .cards-home { grid-template-columns: 1fr; }
+
+  /* Topo de página */
+  .pagina-topo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  /* Tabelas com scroll horizontal */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Formulário */
+  .formulario {
+    padding: 1.25rem;
+    max-width: 100%;
+  }
+
+  /* Previne zoom automático do iOS em inputs */
+  .formulario input,
+  .formulario select,
+  .formulario textarea,
+  .chat-form input {
+    font-size: 1rem;
+  }
+
+  .formulario input,
+  .formulario select,
+  .formulario textarea {
+    padding: 0.75rem 0.9rem;
+  }
+
+  /* Entrar */
+  .entrar-wrap { padding: 2rem 0; }
+
+  /* Filtros */
+  .filtros { flex-wrap: wrap; }
+
+  .filtro-btn { padding: 0.5rem 0.9rem; }
+
+  /* Chat */
+  .chat-wrap { height: calc(100vh - 130px); }
+
+  .chat-mensagens { padding: 1rem; }
+
+  .chat-form {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+
+  .chat-form input { padding: 0.65rem 0.85rem; }
+
+  .bolha { max-width: 82%; }
+
+  /* Ranking */
+  .rank-nome { min-width: 70px; }
+
+  /* Stat grid */
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Grid 2 colunas → 1 coluna */
+  .grid-2 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Evento card */
+  .evento-card {
+    padding: 0.85rem 1rem;
+    gap: 0.85rem;
+  }
+
+  /* Touch targets maiores */
+  .btn { padding: 0.65rem 1.25rem; }
+}
+
+/* ── MOBILE PEQUENO ── */
+@media (max-width: 480px) {
+  .stat-value { font-size: 1.5rem; }
+
+  .badge-grid { grid-template-columns: repeat(3, 1fr); }
+
+  th {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.7rem;
+  }
+
+  td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.83rem;
+  }
+
+  .rank-nome {
+    min-width: 55px;
+    font-size: 0.82rem;
+  }
+
+  .xp-membro-nome { font-size: 0.82rem; }
+
+  .hero h2 { font-size: 1.3rem; }
+
+  .evento-card { flex-wrap: wrap; }
+
+  .evento-data { min-width: auto; }
+
+  .post-card { padding: 1rem; }
+}
