@@ -1280,29 +1280,33 @@ def xp_admin_nivel_deletar(nid):
 @admin_required
 def xp_admin_pontos():
     usuario_id = request.form.get("usuario_id", type=int)
-    codigo     = request.form.get("codigo", "").strip()
+    codigos    = request.form.getlist("codigo")
     descricao  = request.form.get("descricao", "").strip()
-    pts_custom = request.form.get("pontos_custom", type=int)
-    if not usuario_id or not codigo:
+    if not usuario_id or not codigos:
         flash("Preencha todos os campos obrigatórios.", "erro")
         return redirect(url_for("xp_admin"))
-    conn = get_db()
-    cat  = conn.execute("SELECT * FROM xp_categorias WHERE codigo=?", (codigo,)).fetchone()
-    if not cat:
-        flash("Categoria inválida.", "erro")
+    conn  = get_db()
+    total = 0
+    for codigo in codigos:
+        cat = conn.execute("SELECT * FROM xp_categorias WHERE codigo=?", (codigo,)).fetchone()
+        if not cat:
+            continue
+        conn.execute(
+            "INSERT INTO xp_registros (usuario_id, categoria_id, pontos, descricao, concedido_por, criado_em)"
+            " VALUES (?,?,?,?,?,?)",
+            (usuario_id, cat["id"], cat["pontos"], descricao or cat["nome"], session["user_id"], _now())
+        )
+        total += cat["pontos"]
+    if total == 0:
+        flash("Nenhuma categoria válida selecionada.", "erro")
         conn.close()
         return redirect(url_for("xp_admin"))
-    pts = pts_custom if pts_custom and pts_custom > 0 else cat["pontos"]
-    conn.execute(
-        "INSERT INTO xp_registros (usuario_id, categoria_id, pontos, descricao, concedido_por, criado_em)"
-        " VALUES (?,?,?,?,?,?)",
-        (usuario_id, cat["id"], pts, descricao or cat["nome"], session["user_id"], _now())
-    )
     _verificar_badges(conn, usuario_id)
     conn.commit()
     nome = conn.execute("SELECT nome FROM usuarios WHERE id=?", (usuario_id,)).fetchone()["nome"]
     conn.close()
-    flash(f"+{pts} XP concedidos para {nome}!", "sucesso")
+    n = len(codigos)
+    flash(f"+{total} XP concedidos para {nome}! ({n} categoria{'s' if n > 1 else ''})", "sucesso")
     return redirect(url_for("xp_admin"))
 
 
