@@ -514,10 +514,18 @@ def novo_usuario():
         else:
             conn = get_db()
             try:
-                conn.execute(
+                cur = conn.execute(
                     "INSERT INTO usuarios (username, senha_hash, nome, role) VALUES (?, ?, ?, ?)",
                     (username, generate_password_hash(senha), nome, role)
                 )
+                novo_id = cur.lastrowid
+                # cria presenças pendentes para todas as reuniões futuras
+                hoje = date.today().isoformat()
+                for r in conn.execute("SELECT id FROM reunioes WHERE data >= ?", (hoje,)).fetchall():
+                    conn.execute(
+                        "INSERT OR IGNORE INTO presencas (reuniao_id, usuario_id, status) VALUES (?,?,'pendente')",
+                        (r["id"], novo_id)
+                    )
                 conn.commit()
                 conn.close()
                 flash(f"Usuário '{username}' criado com sucesso!", "sucesso")
@@ -796,7 +804,7 @@ def presenca_detalhe(rid):
     ).fetchone()
 
     lista = conn.execute("""
-        SELECT u.nome, u.role, p.status, p.justificativa, p.respondido_em
+        SELECT u.id AS usuario_id, u.nome, u.role, p.status, p.justificativa, p.respondido_em
         FROM presencas p
         JOIN usuarios u ON u.id = p.usuario_id
         WHERE p.reuniao_id = ?
@@ -822,8 +830,17 @@ def presenca_responder(rid):
     if status not in ("confirmado", "ausente_justificado", "ausente"):
         flash("Ação inválida.", "erro")
         return redirect(url_for("presenca_detalhe", rid=rid))
-    agora = _now()
     conn  = get_db()
+    reuniao_data = conn.execute("SELECT data FROM reunioes WHERE id=?", (rid,)).fetchone()
+    if not reuniao_data:
+        conn.close()
+        flash("Reunião não encontrada.", "erro")
+        return redirect(url_for("presenca_reunioes"))
+    if reuniao_data["data"] < date.today().isoformat() and session.get("role") != "admin":
+        conn.close()
+        flash("Não é possível alterar presença de uma reunião que já aconteceu.", "erro")
+        return redirect(url_for("presenca_detalhe", rid=rid))
+    agora = _now()
     conn.execute("""
         INSERT INTO presencas (reuniao_id, usuario_id, status, justificativa, respondido_em)
         VALUES (?, ?, ?, ?, ?)
@@ -848,6 +865,37 @@ def presenca_responder(rid):
     flash(msgs[status], "sucesso")
     next_url = request.form.get("next") or url_for("presenca_detalhe", rid=rid)
     return redirect(next_url)
+
+
+@app.route("/presenca/reunioes/<int:rid>/admin-status", methods=["POST"])
+@admin_required
+def presenca_admin_status(rid):
+    usuario_id = request.form.get("usuario_id", type=int)
+    status     = request.form.get("status")
+    just       = request.form.get("justificativa", "").strip()
+    if not usuario_id or status not in ("confirmado", "pendente", "ausente_justificado", "ausente"):
+        flash("Dados inválidos.", "erro")
+        return redirect(url_for("presenca_detalhe", rid=rid))
+    conn = get_db()
+    conn.execute("""
+        INSERT INTO presencas (reuniao_id, usuario_id, status, justificativa, respondido_em)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(reuniao_id, usuario_id) DO UPDATE SET
+            status        = excluded.status,
+            justificativa = excluded.justificativa,
+            respondido_em = excluded.respondido_em
+    """, (rid, usuario_id, status,
+          just if status == "ausente_justificado" else None, _now()))
+    if status == "confirmado":
+        reuniao = conn.execute("SELECT tipo FROM reunioes WHERE id=?", (rid,)).fetchone()
+        cod = "presenca_evento" if reuniao and reuniao["tipo"] == "evento" else "presenca_reuniao"
+        _award_xp_once(conn, usuario_id, cod, rid, por=session["user_id"])
+        _verificar_badges(conn, usuario_id)
+    conn.commit()
+    nome = conn.execute("SELECT nome FROM usuarios WHERE id=?", (usuario_id,)).fetchone()["nome"]
+    conn.close()
+    flash(f"Status de {nome} atualizado.", "sucesso")
+    return redirect(url_for("presenca_detalhe", rid=rid))
 
 
 @app.route("/presenca/historico")

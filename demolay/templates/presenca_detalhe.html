@@ -102,7 +102,11 @@
     <tr>
       <th>Membro</th>
       <th>Status</th>
-      {% if session.get('role') == 'admin' %}<th>Justificativa</th><th>Respondido</th>{% endif %}
+      {% if session.get('role') == 'admin' %}
+        <th>Justificativa</th>
+        <th>Respondido</th>
+        <th style="width:1%"></th>
+      {% endif %}
     </tr>
   </thead>
   <tbody>
@@ -120,10 +124,41 @@
       {% if session.get('role') == 'admin' %}
       <td style="font-size:0.85rem; color:var(--texto-muted);">{{ p.justificativa or '—' }}</td>
       <td style="font-size:0.8rem; color:var(--texto-muted);">{{ p.respondido_em or '—' }}</td>
+      <td>
+        <button type="button"
+                style="font-size:0.72rem; padding:0.2rem 0.55rem; background:rgba(255,255,255,0.05); border:1px solid var(--borda); border-radius:5px; color:var(--texto-muted); cursor:pointer;"
+                onclick="toggleAdminForm(this)">✎</button>
+        <div class="admin-status-form" style="display:none; margin-top:0.5rem; min-width:220px;">
+          <form method="POST" action="{{ url_for('presenca_admin_status', rid=reuniao.id) }}"
+                style="display:flex; flex-direction:column; gap:0.35rem;">
+            <input type="hidden" name="usuario_id" value="{{ p.usuario_id }}" />
+            <select name="status"
+                    style="font-size:0.8rem; background:var(--superficie2); border:1px solid var(--borda); border-radius:5px; color:var(--texto); padding:0.3rem 0.5rem;">
+              <option value="confirmado"          {% if p.status=='confirmado' %}selected{% endif %}>✓ Confirmado</option>
+              <option value="pendente"            {% if p.status=='pendente' %}selected{% endif %}>Pendente</option>
+              <option value="ausente_justificado" {% if p.status=='ausente_justificado' %}selected{% endif %}>Justificado</option>
+              <option value="ausente"             {% if p.status=='ausente' %}selected{% endif %}>Ausente</option>
+            </select>
+            <input type="text" name="justificativa" placeholder="Justificativa (opcional)"
+                   value="{{ p.justificativa or '' }}"
+                   style="font-size:0.8rem; background:var(--superficie2); border:1px solid var(--borda); border-radius:5px; color:var(--texto); padding:0.3rem 0.5rem;" />
+            <button type="submit" class="btn" style="font-size:0.78rem; padding:0.3rem 0.6rem;">Salvar</button>
+          </form>
+        </div>
+      </td>
       {% endif %}
     </tr>
     {% endfor %}
   </tbody>
 </table>
+
+<script>
+function toggleAdminForm(btn) {
+  var form = btn.nextElementSibling;
+  var visible = form.style.display !== 'none';
+  document.querySelectorAll('.admin-status-form').forEach(function(f){ f.style.display='none'; });
+  if (!visible) form.style.display = 'block';
+}
+</script>
 
 {% endblock %}
