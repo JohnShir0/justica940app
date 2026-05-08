@@ -1344,15 +1344,61 @@ def xp_admin_remover():
 @app.route("/gamificacao/admin/categoria/<int:cat_id>", methods=["POST"])
 @admin_required
 def xp_admin_categoria(cat_id):
+    nome      = request.form.get("nome", "").strip()
+    icone     = request.form.get("icone", "").strip() or "⭐"
     novos_pts = request.form.get("pontos", type=int)
-    if novos_pts is None or novos_pts < 0:
+    if not nome or novos_pts is None or novos_pts < 0:
         flash("Valor inválido.", "erro")
         return redirect(url_for("xp_admin"))
     conn = get_db()
-    conn.execute("UPDATE xp_categorias SET pontos=? WHERE id=?", (novos_pts, cat_id))
+    conn.execute("UPDATE xp_categorias SET nome=?, icone=?, pontos=? WHERE id=?", (nome, icone, novos_pts, cat_id))
     conn.commit()
     conn.close()
-    flash("Pontuação atualizada.", "sucesso")
+    flash("Categoria atualizada.", "sucesso")
+    return redirect(url_for("xp_admin"))
+
+
+@app.route("/gamificacao/admin/categoria/nova", methods=["POST"])
+@admin_required
+def xp_admin_categoria_nova():
+    codigo = request.form.get("codigo", "").strip().lower().replace(" ", "_")
+    nome   = request.form.get("nome", "").strip()
+    icone  = request.form.get("icone", "").strip() or "⭐"
+    pontos = request.form.get("pontos", type=int)
+    if not codigo or not nome or not pontos or pontos < 1:
+        flash("Preencha todos os campos obrigatórios.", "erro")
+        return redirect(url_for("xp_admin"))
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO xp_categorias (codigo, nome, icone, pontos) VALUES (?,?,?,?)",
+            (codigo, nome, icone, pontos)
+        )
+        conn.commit()
+        flash(f"Categoria '{nome}' adicionada.", "sucesso")
+    except Exception:
+        flash(f"Código '{codigo}' já existe. Escolha outro.", "erro")
+    finally:
+        conn.close()
+    return redirect(url_for("xp_admin"))
+
+
+@app.route("/gamificacao/admin/categoria/<int:cat_id>/deletar", methods=["POST"])
+@admin_required
+def xp_admin_categoria_deletar(cat_id):
+    conn = get_db()
+    cat  = conn.execute("SELECT nome FROM xp_categorias WHERE id=?", (cat_id,)).fetchone()
+    if not cat:
+        conn.close()
+        return redirect(url_for("xp_admin"))
+    try:
+        conn.execute("DELETE FROM xp_categorias WHERE id=?", (cat_id,))
+        conn.commit()
+        flash(f"Categoria '{cat['nome']}' removida.", "sucesso")
+    except Exception:
+        flash(f"Não foi possível remover '{cat['nome']}': há registros de XP vinculados.", "erro")
+    finally:
+        conn.close()
     return redirect(url_for("xp_admin"))
 
 

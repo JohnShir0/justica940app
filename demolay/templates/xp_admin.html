@@ -158,20 +158,74 @@
   </form>
 </div>
 
-{# ── CONFIGURAR PESOS ── #}
+{# ── CONFIGURAR CATEGORIAS ── #}
+{% for c in categorias %}
+<form id="cat-edit-{{ c.id }}" method="POST" action="{{ url_for('xp_admin_categoria', cat_id=c.id) }}"></form>
+<form id="cat-del-{{ c.id }}"  method="POST" action="{{ url_for('xp_admin_categoria_deletar', cat_id=c.id) }}"
+      onsubmit="return confirm('Remover a categoria {{ c.nome }}?\nRegistros de XP já concedidos serão mantidos.')"></form>
+{% endfor %}
+
 <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
-  <div class="secao-titulo" style="margin-bottom:0.75rem;">Configurar Pontuação por Categoria</div>
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.25rem 1.5rem;">
-  {% for c in categorias %}
-  <form method="POST" action="{{ url_for('xp_admin_categoria', cat_id=c.id) }}"
-        style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0;border-bottom:1px solid var(--borda);">
-    <span style="font-size:1rem;width:1.5rem;text-align:center;flex-shrink:0;">{{ c.icone }}</span>
-    <span style="flex:1;font-size:0.875rem;color:var(--texto);">{{ c.nome }}</span>
-    <input type="number" name="pontos" value="{{ c.pontos }}" min="0" class="xp-edit-input" />
-    <button type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;">✓</button>
-  </form>
-  {% endfor %}
+  <div class="secao-titulo" style="margin-bottom:1rem;">Configurar Pontuação por Categoria</div>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">Ícone</th>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">Nome</th>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">Pts</th>
+        <th style="border-bottom:1px solid var(--borda);"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for c in categorias %}
+    <tr>
+      <td style="padding:0.5rem 0.4rem;">
+        <input form="cat-edit-{{ c.id }}" type="text" name="icone" value="{{ c.icone }}"
+               style="width:3.2rem;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.35rem 0.5rem;font-size:1rem;outline:none;text-align:center;" />
+      </td>
+      <td style="padding:0.5rem 0.4rem;">
+        <input form="cat-edit-{{ c.id }}" type="text" name="nome" value="{{ c.nome }}" required
+               style="width:100%;min-width:140px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.35rem 0.6rem;font-size:0.875rem;outline:none;font-family:inherit;" />
+      </td>
+      <td style="padding:0.5rem 0.4rem;">
+        <input form="cat-edit-{{ c.id }}" type="number" name="pontos" value="{{ c.pontos }}" min="0"
+               style="width:5.5rem;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.35rem 0.6rem;font-size:0.875rem;outline:none;text-align:center;" />
+      </td>
+      <td style="padding:0.5rem 0.4rem;white-space:nowrap;">
+        <button form="cat-edit-{{ c.id }}" type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;">Salvar</button>
+        <button form="cat-del-{{ c.id }}" type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;background:var(--vermelho);border-color:var(--vermelho);margin-left:0.3rem;">✕</button>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
   </div>
+
+  <form method="POST" action="{{ url_for('xp_admin_categoria_nova') }}"
+        style="display:flex;gap:0.6rem;align-items:flex-end;flex-wrap:wrap;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--borda);">
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Ícone
+      <input type="text" name="icone" placeholder="⭐" maxlength="4"
+             style="margin-top:0.3rem;display:block;width:3.5rem;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.5rem;font-size:1rem;outline:none;text-align:center;" />
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Código
+      <input type="text" name="codigo" required placeholder="ex: lideranca"
+             style="margin-top:0.3rem;display:block;width:120px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;font-family:inherit;" />
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Nome
+      <input type="text" name="nome" required placeholder="Ex: Liderança"
+             style="margin-top:0.3rem;display:block;width:150px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;font-family:inherit;" />
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Pts
+      <input type="number" name="pontos" required min="1" placeholder="10"
+             style="margin-top:0.3rem;display:block;width:80px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;text-align:center;" />
+    </label>
+    <button type="submit" class="btn" style="margin-bottom:0.05rem;">+ Adicionar Categoria</button>
+  </form>
 </div>
 
 {# ── LOG RECENTE ── #}
