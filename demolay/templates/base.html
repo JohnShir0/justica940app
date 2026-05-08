@@ -19,10 +19,10 @@
       </div>
       <nav id="navPrincipal">
         <a href="{{ url_for('index') }}"   class="{{ 'ativo' if request.endpoint == 'index' }}">Início</a>
-        <a href="{{ url_for('presenca_dashboard') }}" class="{{ 'ativo' if 'presenca' in request.endpoint or 'evento' in request.endpoint }}">Agenda &amp; Presença</a>
+        <a href="{{ url_for('mural') }}"   class="{{ 'ativo' if 'mural' in request.endpoint or 'post' in request.endpoint }}">Avisos</a>
         <a href="{{ url_for('chat') }}"     class="{{ 'ativo' if 'chat' in request.endpoint }}">Chat</a>
-        <a href="{{ url_for('mural') }}"   class="{{ 'ativo' if 'mural' in request.endpoint or 'post' in request.endpoint }}">Mural</a>
-        <a href="{{ url_for('xp_dashboard') }}" class="{{ 'ativo' if request.endpoint.startswith('xp_') }}">XP</a>
+        <a href="{{ url_for('presenca_dashboard') }}" class="{{ 'ativo' if 'presenca' in request.endpoint or 'evento' in request.endpoint }}">Confirmar Presença</a>
+        <a href="{{ url_for('xp_dashboard') }}" class="{{ 'ativo' if request.endpoint.startswith('xp_') }}">Ranking</a>
         <a href="{{ url_for('membros') }}" class="{{ 'ativo' if 'membro' in request.endpoint }}">Membros</a>
         {% if session.get('role') == 'admin' %}
           <a href="{{ url_for('admin_usuarios') }}" class="{{ 'ativo' if 'admin' in request.endpoint }}">Usuários</a>
