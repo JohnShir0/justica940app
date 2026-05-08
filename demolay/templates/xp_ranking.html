@@ -1,88 +1,270 @@
 {% extends "base.html" %}
 {% block conteudo %}
 
-<div class="pagina-topo">
-  <h2>Ranking de XP</h2>
-  <a href="{{ url_for('xp_dashboard') }}" class="btn secundario">← Dashboard</a>
-</div>
+<style>
+/* ── Pódio ── */
+.podium-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1.12fr 1fr;
+  gap: .75rem;
+  align-items: end;
+  margin-bottom: 2rem;
+}
 
-<div class="filtros" style="margin-bottom:1.5rem;">
-  <a href="{{ url_for('xp_ranking', periodo='mensal') }}"
-     class="filtro-btn {% if periodo == 'mensal' %}ativo{% endif %}">Este mês</a>
-  <a href="{{ url_for('xp_ranking', periodo='geral') }}"
-     class="filtro-btn {% if periodo == 'geral' %}ativo{% endif %}">Acumulado geral</a>
+.podium-card {
+  border-radius: 14px;
+  padding: 1.75rem .9rem 1.25rem;
+  text-align: center;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .45rem;
+  transition: transform .2s, box-shadow .2s;
+  position: relative;
+  text-decoration: none;
+  cursor: default;
+}
+.podium-card:hover { transform: translateY(-5px); }
+
+.podium-gold   { background: rgba(251,191,36,.055); border-color: rgba(251,191,36,.28);  min-height: 230px; justify-content: flex-end; }
+.podium-silver { background: rgba(148,163,184,.04); border-color: rgba(148,163,184,.2);  min-height: 185px; justify-content: flex-end; }
+.podium-bronze { background: rgba(205,124,64,.04);  border-color: rgba(205,124,64,.18);  min-height: 165px; justify-content: flex-end; }
+
+.podium-medal       { font-size: 2.5rem; line-height: 1; }
+.podium-gold .podium-medal { font-size: 3.1rem; }
+
+.podium-avatar {
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; text-transform: uppercase; border: 2px solid;
+  width: 46px; height: 46px; font-size: 1.05rem; flex-shrink: 0;
+}
+.podium-gold   .podium-avatar { width:56px;height:56px;font-size:1.3rem; color:#fbbf24; border-color:rgba(251,191,36,.45); background:rgba(251,191,36,.09); }
+.podium-silver .podium-avatar { color:#94a3b8; border-color:rgba(148,163,184,.38); background:rgba(148,163,184,.08); }
+.podium-bronze .podium-avatar { color:#cd7c40; border-color:rgba(205,124,64,.38); background:rgba(205,124,64,.08); }
+
+.podium-nome { font-size:.875rem; font-weight:600; color:var(--texto); line-height:1.35; }
+.podium-gold .podium-nome { font-size:.95rem; }
+
+.podium-xp { font-size:1.3rem; font-weight:800; line-height:1; }
+.podium-gold   .podium-xp { font-size:1.6rem; color:#fbbf24; }
+.podium-silver .podium-xp { font-size:1.2rem; color:#94a3b8; }
+.podium-bronze .podium-xp { font-size:1.1rem; color:#cd7c40; }
+
+.podium-sub { font-size:.62rem; text-transform:uppercase; letter-spacing:.07em; color:var(--texto-muted); }
+
+/* ── Lista ── */
+.rank-item {
+  display: flex; align-items: center; gap: .85rem;
+  padding: .875rem 1.25rem;
+  border-bottom: 1px solid var(--borda);
+  transition: background .15s;
+}
+.rank-item:last-child { border-bottom: none; }
+.rank-item:hover { background: rgba(255,255,255,.025); }
+.rank-item.sou-eu {
+  background: rgba(74,222,128,.04);
+  border-left: 2px solid var(--verde);
+  padding-left: calc(1.25rem - 2px);
+}
+.rank-item.sou-eu:hover { background: rgba(74,222,128,.06); }
+
+.rank-barra-col { flex: 1; max-width: 130px; }
+@media (max-width: 560px) {
+  .rank-barra-col { display: none; }
+  .podium-wrap { gap: .4rem; }
+  .podium-card { padding: 1.25rem .5rem 1rem; }
+  .podium-gold  { min-height: 190px; }
+  .podium-silver{ min-height: 155px; }
+  .podium-bronze{ min-height: 140px; }
+  .podium-medal { font-size: 1.75rem; }
+  .podium-gold .podium-medal { font-size: 2.1rem; }
+  .podium-avatar { width:36px!important;height:36px!important;font-size:.85rem!important; }
+  .podium-xp { font-size:1rem!important; }
+  .podium-gold .podium-xp { font-size:1.2rem!important; }
+  .podium-nome { font-size:.78rem; }
+}
+</style>
+
+{# ── CABEÇALHO ── #}
+<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.75rem;flex-wrap:wrap;gap:1rem;">
+  <div>
+    <h2 style="font-size:1.4rem;font-weight:700;color:var(--texto);letter-spacing:-.02em;margin-bottom:.2rem;">⭐ Ranking de XP</h2>
+    <p style="font-size:.82rem;color:var(--texto-muted);">Quem está acumulando mais experiência no capítulo</p>
+  </div>
+  <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+    <a href="{{ url_for('xp_ranking', periodo='mensal') }}"
+       class="filtro-btn {% if periodo=='mensal' %}ativo{% endif %}">Este mês</a>
+    <a href="{{ url_for('xp_ranking', periodo='geral') }}"
+       class="filtro-btn {% if periodo=='geral' %}ativo{% endif %}">Acumulado</a>
+    <a href="{{ url_for('xp_dashboard') }}" class="btn secundario" style="font-size:.8rem;margin-left:.25rem;">← Dashboard</a>
+  </div>
 </div>
 
 {% if ranking %}
 
-{# ── TOP 3 PÓDIO ── #}
-{% if ranking | length >= 3 %}
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--borda);border:1px solid var(--borda);border-radius:12px;overflow:hidden;margin-bottom:1.5rem;">
-  {% for r in ranking[:3] %}
-  <div style="background:var(--superficie);padding:2rem 1rem;text-align:center;{% if loop.index == 1 %}background:rgba(251,191,36,0.04);{% endif %}">
-    <div style="font-size:2.5rem;margin-bottom:0.5rem;">
-      {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% else %}🥉{% endif %}
-    </div>
-    <div style="font-size:0.95rem;font-weight:600;color:var(--texto);margin-bottom:0.35rem;">
-      {{ r.nome }}{% if r.e_eu %} <span style="color:var(--verde);font-size:0.7rem;">(você)</span>{% endif %}
-    </div>
-    <span class="nivel-chip" style="color:{{ r.nivel.cor }};border-color:{{ r.nivel.cor }}33;background:{{ r.nivel.cor }}10;">
-      {{ r.nivel.nome }}
+{# ── BANNER POSIÇÃO DO USUÁRIO ── #}
+{% set eu_rows = ranking | selectattr('e_eu') | list %}
+{% if eu_rows %}
+{% set eu = eu_rows[0] %}
+<div style="background:rgba(74,222,128,.05);border:1px solid rgba(74,222,128,.2);border-radius:10px;padding:.85rem 1.25rem;margin-bottom:1.75rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;">
+  <span style="font-size:1rem;">📍</span>
+  <div style="flex:1;min-width:0;">
+    <span style="font-size:.875rem;color:var(--texto);font-weight:600;">
+      Você está em <span style="color:var(--verde);">{{ eu.pos }}º lugar</span>
     </span>
-    <div style="font-size:1.5rem;font-weight:800;color:{% if loop.index==1 %}#fbbf24{% elif loop.index==2 %}#94a3b8{% else %}#c97c40{% endif %};margin-top:0.75rem;">
-      {{ r.xp }}
-    </div>
-    <div style="font-size:0.72rem;color:var(--texto-muted);">XP · {{ r.n_badges }} badges</div>
+    <span style="font-size:.82rem;color:var(--texto-muted);margin-left:.4rem;">·
+      {{ eu.xp }} XP{% if periodo=='mensal' %} este mês{% endif %}
+    </span>
   </div>
-  {% endfor %}
+  <span class="nivel-chip" style="color:{{ eu.nivel.cor }};border-color:{{ eu.nivel.cor }}33;background:{{ eu.nivel.cor }}10;">
+    {{ eu.nivel.nome }}
+  </span>
+</div>
+{% endif %}
+
+{# ── PÓDIO TOP 3 ── #}
+{% if ranking | length >= 3 %}
+<div class="podium-wrap">
+
+  {# 2º lugar — esquerda #}
+  {% set p = ranking[1] %}
+  <div class="podium-card podium-silver" {% if p.e_eu %}style="box-shadow:0 0 0 2px rgba(74,222,128,.35)"{% endif %}>
+    <div class="podium-medal">🥈</div>
+    <div class="podium-avatar">{{ p.nome[0] }}</div>
+    <div class="podium-nome">
+      {{ p.nome }}{% if p.e_eu %}<br><span style="color:var(--verde);font-size:.68rem;">você</span>{% endif %}
+    </div>
+    <span class="nivel-chip" style="font-size:.6rem;padding:.1rem .45rem;color:{{ p.nivel.cor }};border-color:{{ p.nivel.cor }}33;background:{{ p.nivel.cor }}10;">{{ p.nivel.nome }}</span>
+    <div class="podium-xp">{{ p.xp }}</div>
+    <div class="podium-sub">XP · {{ p.n_badges }} badge{{ 's' if p.n_badges != 1 }}</div>
+    <a href="{{ url_for('xp_perfil_usuario', user_id=p.id) }}"
+       style="font-size:.7rem;color:var(--texto-muted);text-decoration:none;margin-top:.3rem;padding:.2rem .6rem;border:1px solid var(--borda);border-radius:5px;transition:color .15s,border-color .15s;"
+       onmouseenter="this.style.color='var(--verde)';this.style.borderColor='rgba(74,222,128,.3)'"
+       onmouseleave="this.style.color='var(--texto-muted)';this.style.borderColor='var(--borda)'">ver perfil</a>
+  </div>
+
+  {# 1º lugar — centro #}
+  {% set p = ranking[0] %}
+  <div class="podium-card podium-gold" {% if p.e_eu %}style="box-shadow:0 0 0 2px rgba(74,222,128,.35)"{% endif %}>
+    <div class="podium-medal">👑</div>
+    <div class="podium-avatar">{{ p.nome[0] }}</div>
+    <div class="podium-nome">
+      {{ p.nome }}{% if p.e_eu %}<br><span style="color:var(--verde);font-size:.68rem;">você</span>{% endif %}
+    </div>
+    <span class="nivel-chip" style="font-size:.63rem;padding:.12rem .5rem;color:{{ p.nivel.cor }};border-color:{{ p.nivel.cor }}33;background:{{ p.nivel.cor }}10;">{{ p.nivel.nome }}</span>
+    <div class="podium-xp">{{ p.xp }}</div>
+    <div class="podium-sub">XP · {{ p.n_badges }} badge{{ 's' if p.n_badges != 1 }}</div>
+    <a href="{{ url_for('xp_perfil_usuario', user_id=p.id) }}"
+       style="font-size:.7rem;color:var(--texto-muted);text-decoration:none;margin-top:.3rem;padding:.2rem .6rem;border:1px solid var(--borda);border-radius:5px;transition:color .15s,border-color .15s;"
+       onmouseenter="this.style.color='var(--verde)';this.style.borderColor='rgba(74,222,128,.3)'"
+       onmouseleave="this.style.color='var(--texto-muted)';this.style.borderColor='var(--borda)'">ver perfil</a>
+  </div>
+
+  {# 3º lugar — direita #}
+  {% set p = ranking[2] %}
+  <div class="podium-card podium-bronze" {% if p.e_eu %}style="box-shadow:0 0 0 2px rgba(74,222,128,.35)"{% endif %}>
+    <div class="podium-medal">🥉</div>
+    <div class="podium-avatar">{{ p.nome[0] }}</div>
+    <div class="podium-nome">
+      {{ p.nome }}{% if p.e_eu %}<br><span style="color:var(--verde);font-size:.68rem;">você</span>{% endif %}
+    </div>
+    <span class="nivel-chip" style="font-size:.6rem;padding:.1rem .45rem;color:{{ p.nivel.cor }};border-color:{{ p.nivel.cor }}33;background:{{ p.nivel.cor }}10;">{{ p.nivel.nome }}</span>
+    <div class="podium-xp">{{ p.xp }}</div>
+    <div class="podium-sub">XP · {{ p.n_badges }} badge{{ 's' if p.n_badges != 1 }}</div>
+    <a href="{{ url_for('xp_perfil_usuario', user_id=p.id) }}"
+       style="font-size:.7rem;color:var(--texto-muted);text-decoration:none;margin-top:.3rem;padding:.2rem .6rem;border:1px solid var(--borda);border-radius:5px;transition:color .15s,border-color .15s;"
+       onmouseenter="this.style.color='var(--verde)';this.style.borderColor='rgba(74,222,128,.3)'"
+       onmouseleave="this.style.color='var(--texto-muted)';this.style.borderColor='var(--borda)'">ver perfil</a>
+  </div>
+
 </div>
 {% endif %}
 
 {# ── LISTA COMPLETA ── #}
 <div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;overflow:hidden;">
+
+  <div style="padding:.85rem 1.25rem;border-bottom:1px solid var(--borda);display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;color:var(--texto-muted);font-weight:600;">Classificação completa</span>
+    <span style="font-size:.75rem;color:var(--texto-muted);">{{ ranking | length }} membros</span>
+  </div>
+
   {% for r in ranking %}
-  <div class="xp-ranking-row {% if r.e_eu %}destaque{% endif %}">
-    <div class="xp-pos">
+  <div class="rank-item{% if r.e_eu %} sou-eu{% endif %}">
+
+    {# Posição #}
+    <div style="min-width:1.75rem;text-align:center;flex-shrink:0;font-size:.9rem;">
       {% if r.pos == 1 %}🥇
       {% elif r.pos == 2 %}🥈
       {% elif r.pos == 3 %}🥉
-      {% else %}<span style="color:var(--texto-muted);font-size:0.8rem;">{{ r.pos }}</span>
+      {% else %}<span style="font-size:.78rem;font-weight:700;color:var(--texto-muted);">{{ r.pos }}</span>
       {% endif %}
     </div>
 
-    <div style="width:40px;height:40px;border-radius:50%;border:2px solid {{ r.nivel.cor }}33;display:flex;align-items:center;justify-content:center;font-size:0.9rem;font-weight:800;color:{{ r.nivel.cor }};background:{{ r.nivel.cor }}10;flex-shrink:0;">
-      {{ r.nivel.numero }}
+    {# Avatar com inicial #}
+    <div style="width:36px;height:36px;border-radius:50%;border:2px solid {{ r.nivel.cor }}44;display:flex;align-items:center;justify-content:center;font-size:.88rem;font-weight:800;color:{{ r.nivel.cor }};background:{{ r.nivel.cor }}0d;flex-shrink:0;text-transform:uppercase;">
+      {{ r.nome[0] }}
     </div>
 
-    <div class="xp-membro">
-      <div class="xp-membro-nome">
+    {# Nome + nível + badges #}
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:.88rem;font-weight:600;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
         {{ r.nome }}
-        {% if r.e_eu %}<span style="color:var(--verde);font-size:0.72rem;margin-left:0.35rem;">(você)</span>{% endif %}
+        {% if r.e_eu %}<span style="font-size:.67rem;color:var(--verde);font-weight:600;margin-left:.3rem;">você</span>{% endif %}
       </div>
-      <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.2rem;">
-        <span class="nivel-chip" style="color:{{ r.nivel.cor }};border-color:{{ r.nivel.cor }}22;background:{{ r.nivel.cor }}08;font-size:0.65rem;padding:0.1rem 0.45rem;">
-          {{ r.nivel.nome }}
-        </span>
+      <div style="display:flex;align-items:center;gap:.4rem;margin-top:.2rem;flex-wrap:wrap;">
+        <span class="nivel-chip" style="font-size:.6rem;padding:.08rem .4rem;color:{{ r.nivel.cor }};border-color:{{ r.nivel.cor }}22;background:{{ r.nivel.cor }}09;">{{ r.nivel.nome }}</span>
         {% if r.n_badges > 0 %}
-        <span style="font-size:0.7rem;color:var(--texto-muted);">{{ r.n_badges }} badge{{ 's' if r.n_badges != 1 }}</span>
+        <span style="font-size:.67rem;color:var(--texto-muted);">{{ r.n_badges }} badge{{ 's' if r.n_badges != 1 }}</span>
         {% endif %}
       </div>
     </div>
 
-    <div style="flex:1;max-width:160px;">
-      <div class="xp-bar" style="height:4px;">
-        <div class="xp-bar-fill" style="width:{{ r.nivel.progresso }}%;background:{{ r.nivel.cor }};"></div>
+    {# Barra de progresso para o próximo nível (desktop) #}
+    <div class="rank-barra-col">
+      <div style="height:4px;background:var(--superficie2);border-radius:99px;overflow:hidden;">
+        <div class="xp-fill" data-w="{{ r.nivel.progresso }}"
+             style="height:100%;border-radius:99px;background:{{ r.nivel.cor }};width:0%;transition:width .7s cubic-bezier(.4,0,.2,1);"></div>
+      </div>
+      <div style="font-size:.59rem;color:var(--texto-muted);margin-top:3px;text-align:right;">
+        {% if r.nivel.proximo %}
+          {{ r.nivel.progresso }}% → {{ r.nivel.proximo }}
+        {% else %}
+          Nível máximo
+        {% endif %}
       </div>
     </div>
 
-    <div class="xp-pts">{{ r.xp }} <span style="font-size:0.7rem;color:var(--texto-muted);font-weight:400;">XP</span></div>
-    <a href="{{ url_for('xp_perfil_usuario', user_id=r.id) }}" style="font-size:0.75rem;color:var(--texto-muted);text-decoration:none;padding:0.2rem 0.6rem;border:1px solid var(--borda);border-radius:5px;">ver</a>
+    {# XP #}
+    <div style="text-align:right;flex-shrink:0;min-width:3.25rem;">
+      <div style="font-size:1rem;font-weight:800;color:{{ r.nivel.cor }};line-height:1.1;">{{ r.xp }}</div>
+      <div style="font-size:.6rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:.05em;">XP</div>
+    </div>
+
+    {# Link perfil #}
+    <a href="{{ url_for('xp_perfil_usuario', user_id=r.id) }}"
+       style="font-size:.7rem;color:var(--texto-muted);text-decoration:none;padding:.25rem .6rem;border:1px solid var(--borda);border-radius:5px;flex-shrink:0;transition:color .15s,border-color .15s;white-space:nowrap;"
+       onmouseenter="this.style.color='var(--verde)';this.style.borderColor='rgba(74,222,128,.3)'"
+       onmouseleave="this.style.color='var(--texto-muted)';this.style.borderColor='var(--borda)'">ver</a>
+
   </div>
   {% endfor %}
+
 </div>
 
 {% else %}
 <p class="vazio">Nenhum dado para este período.</p>
 {% endif %}
+
+<script>
+requestAnimationFrame(function() {
+  setTimeout(function() {
+    document.querySelectorAll('.xp-fill').forEach(function(el) {
+      el.style.width = (el.dataset.w || 0) + '%';
+    });
+  }, 100);
+});
+</script>
 
 {% endblock %}
