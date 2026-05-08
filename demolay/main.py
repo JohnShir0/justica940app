@@ -8,7 +8,9 @@ import os
 app = Flask(__name__)
 app.secret_key = "demolay_secret_2026_xK9#mP"
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "demolay.db")
+_DB_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "demolay")
+os.makedirs(_DB_DIR, exist_ok=True)
+DB_PATH = os.path.join(_DB_DIR, "demolay.db")
 
 
 def get_db():
