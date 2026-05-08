@@ -8,9 +8,16 @@ import os
 app = Flask(__name__)
 app.secret_key = "demolay_secret_2026_xK9#mP"
 
-_DB_DIR = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "demolay")
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_DB_DIR   = os.path.join(_BASE_DIR, "instance")
 os.makedirs(_DB_DIR, exist_ok=True)
 DB_PATH = os.path.join(_DB_DIR, "demolay.db")
+
+# migra banco do caminho antigo (LOCALAPPDATA) para o novo, se necessário
+_OLD_DB = os.path.join(os.environ.get("LOCALAPPDATA", ""), "demolay", "demolay.db")
+if not os.path.exists(DB_PATH) and os.path.exists(_OLD_DB):
+    import shutil
+    shutil.copy2(_OLD_DB, DB_PATH)
 
 
 def get_db():
