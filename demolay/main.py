@@ -48,14 +48,14 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             autor TEXT NOT NULL,
             conteudo TEXT NOT NULL,
-            criado_em TEXT DEFAULT (datetime('now', 'localtime'))
+            criado_em TEXT DEFAULT (datetime('now', '-3 hours'))
         );
 
         CREATE TABLE IF NOT EXISTS mensagens (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             autor TEXT NOT NULL,
             texto TEXT NOT NULL,
-            criado_em TEXT DEFAULT (datetime('now', 'localtime'))
+            criado_em TEXT DEFAULT (datetime('now', '-3 hours'))
         );
 
         CREATE TABLE IF NOT EXISTS reunioes (
@@ -66,7 +66,7 @@ def init_db():
             hora TEXT NOT NULL DEFAULT '19:00',
             tipo TEXT NOT NULL DEFAULT 'reuniao',
             criado_por INTEGER REFERENCES usuarios(id),
-            criado_em TEXT DEFAULT (datetime('now', 'localtime'))
+            criado_em TEXT DEFAULT (datetime('now', '-3 hours'))
         );
 
         CREATE TABLE IF NOT EXISTS presencas (
@@ -96,7 +96,7 @@ def init_db():
             descricao TEXT,
             referencia_id INTEGER,
             concedido_por INTEGER REFERENCES usuarios(id),
-            criado_em TEXT DEFAULT (datetime('now', 'localtime'))
+            criado_em TEXT DEFAULT (datetime('now', '-3 hours'))
         );
 
         CREATE TABLE IF NOT EXISTS xp_badges (
@@ -113,7 +113,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             usuario_id INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
             badge_id INTEGER NOT NULL REFERENCES xp_badges(id),
-            conquistado_em TEXT DEFAULT (datetime('now', 'localtime')),
+            conquistado_em TEXT DEFAULT (datetime('now', '-3 hours')),
             UNIQUE(usuario_id, badge_id)
         );
 
@@ -425,7 +425,7 @@ def publicar():
     conteudo = request.form["conteudo"].strip()
     if conteudo:
         conn = get_db()
-        conn.execute("INSERT INTO posts (autor, conteudo) VALUES (?, ?)", (session["nome"], conteudo))
+        conn.execute("INSERT INTO posts (autor, conteudo, criado_em) VALUES (?, ?, ?)", (session["nome"], conteudo, _now()))
         conn.commit()
         conn.close()
     return redirect(url_for("mural"))
@@ -460,8 +460,8 @@ def enviar_mensagem():
         xp = conn.execute("SELECT COALESCE(SUM(pontos),0) FROM xp_registros WHERE usuario_id=?", (uid,)).fetchone()[0]
         nivel = _nivel_info(xp, _get_niveis(conn))
         conn.execute(
-            "INSERT INTO mensagens (autor, texto, nivel_nome, nivel_cor) VALUES (?, ?, ?, ?)",
-            (session["nome"], texto, nivel["nome"], nivel["cor"])
+            "INSERT INTO mensagens (autor, texto, nivel_nome, nivel_cor, criado_em) VALUES (?, ?, ?, ?, ?)",
+            (session["nome"], texto, nivel["nome"], nivel["cor"], _now())
         )
         conn.commit()
         conn.close()
@@ -488,7 +488,7 @@ def buscar_mensagens():
 def admin_usuarios():
     conn = get_db()
     usuarios  = conn.execute("SELECT id, username, nome, role FROM usuarios ORDER BY nome").fetchall()
-    _row = conn.execute("SELECT id FROM usuarios WHERE LOWER(TRIM(nome))=LOWER(TRIM(?)) LIMIT 1", (OWNER_NOME,)).fetchone()
+    _row = conn.execute("SELECT id FROM usuarios WHERE username=? LIMIT 1", (OWNER_USERNAME,)).fetchone()
     owner_id  = _row["id"] if _row else None
     conn.close()
     return render_template("admin_usuarios.html", usuarios=usuarios, owner_id=owner_id)
@@ -525,7 +525,7 @@ def novo_usuario():
 @admin_required
 def deletar_usuario(id):
     conn = get_db()
-    _row = conn.execute("SELECT id FROM usuarios WHERE LOWER(TRIM(nome))=LOWER(TRIM(?)) LIMIT 1", (OWNER_NOME,)).fetchone()
+    _row = conn.execute("SELECT id FROM usuarios WHERE username=? LIMIT 1", (OWNER_USERNAME,)).fetchone()
     owner_id = _row["id"] if _row else None
     if id == owner_id:
         flash("O proprietário do sistema não pode ser removido.", "erro")
@@ -546,7 +546,7 @@ def deletar_usuario(id):
 @admin_required
 def toggle_admin(id):
     conn = get_db()
-    _row = conn.execute("SELECT id FROM usuarios WHERE LOWER(TRIM(nome))=LOWER(TRIM(?)) LIMIT 1", (OWNER_NOME,)).fetchone()
+    _row = conn.execute("SELECT id FROM usuarios WHERE username=? LIMIT 1", (OWNER_USERNAME,)).fetchone()
     owner_id = _row["id"] if _row else None
     if id == owner_id:
         flash("O proprietário do sistema não pode ser alterado.", "erro")
@@ -568,7 +568,13 @@ def toggle_admin(id):
 
 # ── GAMIFICAÇÃO — CONSTANTES E HELPERS ────────────────────────────────────────
 
-OWNER_NOME = "João Souza"
+OWNER_USERNAME = "joaosouza"
+
+
+def _now():
+    """Retorna datetime atual no fuso de Brasília (UTC-3) como string."""
+    from datetime import timezone
+    return (dt.now(timezone.utc) - timedelta(hours=3)).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def _get_niveis(conn):
@@ -605,9 +611,9 @@ def _award_xp_once(conn, usuario_id, codigo, ref_id, descricao=None, por=None):
     ).fetchone():
         return 0
     conn.execute(
-        "INSERT INTO xp_registros (usuario_id, categoria_id, pontos, descricao, referencia_id, concedido_por)"
-        " VALUES (?,?,?,?,?,?)",
-        (usuario_id, cat["id"], cat["pontos"], descricao or cat["nome"], ref_id, por)
+        "INSERT INTO xp_registros (usuario_id, categoria_id, pontos, descricao, referencia_id, concedido_por, criado_em)"
+        " VALUES (?,?,?,?,?,?,?)",
+        (usuario_id, cat["id"], cat["pontos"], descricao or cat["nome"], ref_id, por, _now())
     )
     return cat["pontos"]
 
@@ -634,8 +640,8 @@ def _verificar_badges(conn, usuario_id):
               (t == "indicacao"    and _count_cat("indicacao")   >= v) or
               (t == "estudo"       and _count_cat("estudo")      >= v))
         if ok:
-            conn.execute("INSERT OR IGNORE INTO xp_usuario_badges (usuario_id, badge_id) VALUES (?,?)",
-                         (usuario_id, b["id"]))
+            conn.execute("INSERT OR IGNORE INTO xp_usuario_badges (usuario_id, badge_id, conquistado_em) VALUES (?,?,?)",
+                         (usuario_id, b["id"], _now()))
 
 
 # ── PRESENÇA ──────────────────────────────────────────────────────────────────
@@ -744,8 +750,8 @@ def presenca_nova_reuniao():
         else:
             conn = get_db()
             cur = conn.execute(
-                "INSERT INTO reunioes (titulo, descricao, data, hora, tipo, criado_por) VALUES (?,?,?,?,?,?)",
-                (titulo, descricao, data_r, hora_r, tipo, session["user_id"])
+                "INSERT INTO reunioes (titulo, descricao, data, hora, tipo, criado_por, criado_em) VALUES (?,?,?,?,?,?,?)",
+                (titulo, descricao, data_r, hora_r, tipo, session["user_id"], _now())
             )
             _criar_presencas_para_reuniao(conn, cur.lastrowid)
             conn.commit()
@@ -809,7 +815,7 @@ def presenca_responder(rid):
     if status not in ("confirmado", "ausente_justificado", "ausente"):
         flash("Ação inválida.", "erro")
         return redirect(url_for("presenca_detalhe", rid=rid))
-    agora = dt.now().strftime("%Y-%m-%d %H:%M:%S")
+    agora = _now()
     conn  = get_db()
     conn.execute("""
         INSERT INTO presencas (reuniao_id, usuario_id, status, justificativa, respondido_em)
@@ -1227,9 +1233,9 @@ def xp_admin_pontos():
         return redirect(url_for("xp_admin"))
     pts = pts_custom if pts_custom and pts_custom > 0 else cat["pontos"]
     conn.execute(
-        "INSERT INTO xp_registros (usuario_id, categoria_id, pontos, descricao, concedido_por)"
-        " VALUES (?,?,?,?,?)",
-        (usuario_id, cat["id"], pts, descricao or cat["nome"], session["user_id"])
+        "INSERT INTO xp_registros (usuario_id, categoria_id, pontos, descricao, concedido_por, criado_em)"
+        " VALUES (?,?,?,?,?,?)",
+        (usuario_id, cat["id"], pts, descricao or cat["nome"], session["user_id"], _now())
     )
     _verificar_badges(conn, usuario_id)
     conn.commit()
@@ -1259,9 +1265,9 @@ def xp_admin_remover():
     cat = conn.execute("SELECT id FROM xp_categorias WHERE codigo='manual'").fetchone()
     cat_id = cat["id"] if cat else conn.execute("SELECT id FROM xp_categorias LIMIT 1").fetchone()["id"]
     conn.execute(
-        "INSERT INTO xp_registros (usuario_id, categoria_id, pontos, descricao, concedido_por)"
-        " VALUES (?,?,?,?,?)",
-        (usuario_id, cat_id, -pontos, descricao or "Remoção de XP", session["user_id"])
+        "INSERT INTO xp_registros (usuario_id, categoria_id, pontos, descricao, concedido_por, criado_em)"
+        " VALUES (?,?,?,?,?,?)",
+        (usuario_id, cat_id, -pontos, descricao or "Remoção de XP", session["user_id"], _now())
     )
     conn.commit()
     nome = conn.execute("SELECT nome FROM usuarios WHERE id=?", (usuario_id,)).fetchone()["nome"]
