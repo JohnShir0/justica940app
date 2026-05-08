@@ -8,9 +8,15 @@ import os
 app = Flask(__name__)
 app.secret_key = "demolay_secret_2026_xK9#mP"
 
-_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_DB_DIR   = os.path.join(_BASE_DIR, "instance")
-os.makedirs(_DB_DIR, exist_ok=True)
+# Railway monta o volume persistente em /data.
+# Localmente /data não existe, então cai no caminho instance/ ao lado do script.
+if os.path.isdir("/data"):
+    _DB_DIR = "/data"
+else:
+    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    _DB_DIR   = os.path.join(_BASE_DIR, "instance")
+    os.makedirs(_DB_DIR, exist_ok=True)
+
 DB_PATH = os.path.join(_DB_DIR, "demolay.db")
 
 # migra banco do caminho antigo (LOCALAPPDATA) para o novo, se necessário
