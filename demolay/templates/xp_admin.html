@@ -228,6 +228,88 @@
   </form>
 </div>
 
+{# ── TÍTULOS ÚNICOS ── #}
+{% for b in badges %}
+<form id="badge-del-{{ b.id }}" method="POST" action="{{ url_for('xp_admin_badge_deletar', badge_id=b.id) }}"
+      onsubmit="return confirm('Remover o título {{ b.nome }}?\nMembros que já conquistaram perderão o registro.')"></form>
+{% endfor %}
+
+<div style="background:var(--superficie);border:1px solid var(--borda);border-radius:12px;padding:1.5rem;margin-bottom:2rem;">
+  <div class="secao-titulo" style="margin-bottom:1rem;">Títulos Únicos</div>
+  <div style="overflow-x:auto;">
+  <table style="width:100%;border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);"></th>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">Nome</th>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">Condição</th>
+        <th style="text-align:left;font-size:0.72rem;color:var(--texto-muted);padding:0.4rem 0.6rem;border-bottom:1px solid var(--borda);">Valor</th>
+        <th style="border-bottom:1px solid var(--borda);"></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% set tipo_label = {'pontos_total':'XP total','presencas':'Presenças','acao_social':'Ações sociais','indicacao':'Indicações','estudo':'Estudos'} %}
+    {% for b in badges %}
+    <tr>
+      <td style="padding:0.5rem 0.6rem;font-size:1.1rem;text-align:center;width:2.5rem;">{{ b.icone or '🏅' }}</td>
+      <td style="padding:0.5rem 0.6rem;">
+        <span style="font-size:0.875rem;font-weight:500;color:var(--texto);">{{ b.nome }}</span>
+        {% if b.descricao %}<br><span style="font-size:0.75rem;color:var(--texto-muted);">{{ b.descricao }}</span>{% endif %}
+      </td>
+      <td style="padding:0.5rem 0.6rem;font-size:0.82rem;color:var(--texto-muted);">{{ tipo_label.get(b.condicao_tipo, b.condicao_tipo or '—') }}</td>
+      <td style="padding:0.5rem 0.6rem;font-size:0.82rem;color:var(--texto-muted);">{{ b.condicao_valor or '—' }}</td>
+      <td style="padding:0.5rem 0.4rem;">
+        <button form="badge-del-{{ b.id }}" type="submit" class="btn" style="padding:0.25rem 0.65rem;font-size:0.78rem;background:var(--vermelho);border-color:var(--vermelho);">✕</button>
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+
+  <form method="POST" action="{{ url_for('xp_admin_badge_novo') }}"
+        style="display:flex;gap:0.6rem;align-items:flex-end;flex-wrap:wrap;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--borda);">
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Ícone
+      <input type="text" name="icone" placeholder="🏅" maxlength="4"
+             style="margin-top:0.3rem;display:block;width:3.5rem;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.5rem;font-size:1rem;outline:none;text-align:center;" />
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Código
+      <input type="text" name="codigo" required placeholder="ex: veterano"
+             style="margin-top:0.3rem;display:block;width:120px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;font-family:inherit;" />
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Nome
+      <input type="text" name="nome" required placeholder="Ex: Veterano"
+             style="margin-top:0.3rem;display:block;width:140px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;font-family:inherit;" />
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Descrição
+      <input type="text" name="descricao" placeholder="Opcional..."
+             style="margin-top:0.3rem;display:block;width:160px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;font-family:inherit;" />
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Condição
+      <select name="condicao_tipo"
+              style="margin-top:0.3rem;display:block;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;">
+        <option value="">— nenhuma —</option>
+        <option value="pontos_total">XP total</option>
+        <option value="presencas">Presenças</option>
+        <option value="acao_social">Ações sociais</option>
+        <option value="indicacao">Indicações</option>
+        <option value="estudo">Estudos</option>
+      </select>
+    </label>
+    <label style="font-size:0.72rem;color:var(--texto-muted);text-transform:uppercase;letter-spacing:0.07em;">
+      Valor
+      <input type="number" name="condicao_valor" min="1" placeholder="—"
+             style="margin-top:0.3rem;display:block;width:80px;background:var(--superficie2);border:1px solid var(--borda);border-radius:6px;color:var(--texto);padding:0.4rem 0.6rem;font-size:0.875rem;outline:none;text-align:center;" />
+    </label>
+    <button type="submit" class="btn" style="margin-bottom:0.05rem;">+ Adicionar Título</button>
+  </form>
+</div>
+
 {# ── LOG RECENTE ── #}
 <div class="secao-titulo" style="margin-bottom:0.75rem;">Log Recente de XP (últimas 20 ações)</div>
 {% if recentes %}

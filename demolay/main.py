@@ -1193,6 +1193,7 @@ def xp_admin():
     categorias = conn.execute("SELECT * FROM xp_categorias ORDER BY pontos DESC").fetchall()
     usuarios   = conn.execute("SELECT id, nome FROM usuarios ORDER BY nome").fetchall()
     niveis_db  = conn.execute("SELECT * FROM xp_niveis ORDER BY limiar ASC").fetchall()
+    badges     = conn.execute("SELECT * FROM xp_badges ORDER BY condicao_valor ASC").fetchall()
     recentes   = conn.execute("""
         SELECT xr.pontos, xr.descricao, xr.criado_em,
                u.nome AS membro, xc.nome AS cat, xc.icone
@@ -1204,7 +1205,7 @@ def xp_admin():
     conn.close()
     return render_template("xp_admin.html",
                            categorias=categorias, usuarios=usuarios,
-                           niveis_db=niveis_db, recentes=recentes)
+                           niveis_db=niveis_db, badges=badges, recentes=recentes)
 
 
 @app.route("/gamificacao/admin/nivel/novo", methods=["POST"])
@@ -1397,6 +1398,53 @@ def xp_admin_categoria_deletar(cat_id):
         flash(f"Categoria '{cat['nome']}' removida.", "sucesso")
     except Exception:
         flash(f"Não foi possível remover '{cat['nome']}': há registros de XP vinculados.", "erro")
+    finally:
+        conn.close()
+    return redirect(url_for("xp_admin"))
+
+
+@app.route("/gamificacao/admin/badge/novo", methods=["POST"])
+@admin_required
+def xp_admin_badge_novo():
+    codigo         = request.form.get("codigo", "").strip().lower().replace(" ", "_")
+    nome           = request.form.get("nome", "").strip()
+    icone          = request.form.get("icone", "").strip() or "🏅"
+    descricao      = request.form.get("descricao", "").strip()
+    condicao_tipo  = request.form.get("condicao_tipo", "").strip() or None
+    condicao_valor = request.form.get("condicao_valor", type=int)
+    if not codigo or not nome:
+        flash("Código e nome são obrigatórios.", "erro")
+        return redirect(url_for("xp_admin"))
+    conn = get_db()
+    try:
+        conn.execute(
+            "INSERT INTO xp_badges (codigo, nome, icone, descricao, condicao_tipo, condicao_valor) VALUES (?,?,?,?,?,?)",
+            (codigo, nome, icone, descricao or None, condicao_tipo, condicao_valor)
+        )
+        conn.commit()
+        flash(f"Título '{nome}' adicionado.", "sucesso")
+    except Exception:
+        flash(f"Código '{codigo}' já existe. Escolha outro.", "erro")
+    finally:
+        conn.close()
+    return redirect(url_for("xp_admin"))
+
+
+@app.route("/gamificacao/admin/badge/<int:badge_id>/deletar", methods=["POST"])
+@admin_required
+def xp_admin_badge_deletar(badge_id):
+    conn  = get_db()
+    badge = conn.execute("SELECT nome FROM xp_badges WHERE id=?", (badge_id,)).fetchone()
+    if not badge:
+        conn.close()
+        return redirect(url_for("xp_admin"))
+    try:
+        conn.execute("DELETE FROM xp_usuario_badges WHERE badge_id=?", (badge_id,))
+        conn.execute("DELETE FROM xp_badges WHERE id=?", (badge_id,))
+        conn.commit()
+        flash(f"Título '{badge['nome']}' removido.", "sucesso")
+    except Exception:
+        flash(f"Não foi possível remover '{badge['nome']}'.", "erro")
     finally:
         conn.close()
     return redirect(url_for("xp_admin"))
